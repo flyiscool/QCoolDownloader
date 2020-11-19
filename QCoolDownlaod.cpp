@@ -123,7 +123,7 @@ void CPThreadUsbMonitor::threadCPUsbMonitor_main( void)
 
     if (ctx != NULL)
     {
-        //libusb_exit(pCPthThis->ctx); //close the sessio
+        //libusb_exit(ctx); //close the sessio
     }
     ctx = NULL;
     g_download_flag = false;
@@ -529,7 +529,18 @@ int CPThreadUsbMonitor::Cmd_Upgrade_V2(libusb_device_handle* dev, QString* upgra
         for (j = 0; j < wait_time; j++)
         {
             Sleep(10);
-            r = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_IN, pkg_ret, 512, &transferred, 1000);
+            
+            qDebug() << "nCurrentFrame = " << nCurrentFrame <<endl;
+            
+            r = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_IN, pkg_ret, 512, &transferred, 100);
+            
+            qDebug() << "r = " << r << endl;
+
+            if ((r < 0)&&(nCurrentFrame == 0))
+            {
+                ret = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_OUT, buffer, length + 10, &transferred, 1000);
+            }
+
             if (transferred > 0)
             {
                 //pkg okg
