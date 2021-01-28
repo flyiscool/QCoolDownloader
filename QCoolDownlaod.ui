@@ -2,12 +2,15 @@
 <ui version="4.0">
  <class>QCoolDownlaodClass</class>
  <widget class="QMainWindow" name="QCoolDownlaodClass">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>651</width>
-    <height>268</height>
+    <width>1306</width>
+    <height>747</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,31 +20,18 @@
    <widget class="QTextBrowser" name="textBrowser">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>651</width>
-      <height>171</height>
+      <x>10</x>
+      <y>400</y>
+      <width>1141</width>
+      <height>291</height>
      </rect>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="sel_bt">
-    <property name="geometry">
-     <rect>
-      <x>120</x>
-      <y>180</y>
-      <width>75</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>select file</string>
     </property>
    </widget>
    <widget class="QPushButton" name="download_pt">
     <property name="geometry">
      <rect>
-      <x>430</x>
-      <y>180</y>
+      <x>360</x>
+      <y>0</y>
       <width>75</width>
       <height>23</height>
      </rect>
@@ -50,14 +40,169 @@
      <string>download</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="sel_connect">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>80</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>connect</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="sel_get_verison">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>0</y>
+      <width>80</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>get verison</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="sel_bt">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>0</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>select file</string>
+    </property>
+   </widget>
+   <widget class="QTabWidget" name="tabWidget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>30</y>
+      <width>1141</width>
+      <height>361</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>2</number>
+    </property>
+    <widget class="QWidget" name="tab_setting">
+     <attribute name="title">
+      <string>功能设置</string>
+     </attribute>
+     <widget class="QPushButton" name="bt_get_setting">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>10</y>
+        <width>80</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>get setting</string>
+      </property>
+     </widget>
+     <widget class="QTreeWidget" name="treeWidget">
+      <property name="geometry">
+       <rect>
+        <x>290</x>
+        <y>0</y>
+        <width>881</width>
+        <height>331</height>
+       </rect>
+      </property>
+      <column>
+       <property name="text">
+        <string>名称</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>值</string>
+       </property>
+      </column>
+      <item>
+       <property name="text">
+        <string>串口设置</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <item>
+        <property name="text">
+         <string>UART3波特率</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>UART3工作模式</string>
+        </property>
+       </item>
+      </item>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab">
+     <attribute name="title">
+      <string>固件升级</string>
+     </attribute>
+    </widget>
+    <widget class="QWidget" name="tab_debug">
+     <attribute name="title">
+      <string>飞控调试</string>
+     </attribute>
+     <widget class="QPushButton" name="bt_flydebugstart">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>81</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>读取调试数据</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bt_flydebugstop">
+      <property name="geometry">
+       <rect>
+        <x>120</x>
+        <y>20</y>
+        <width>81</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>停止</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_2">
+     <attribute name="title">
+      <string>图像预览</string>
+     </attribute>
+    </widget>
+   </widget>
+   <zorder>tabWidget</zorder>
+   <zorder>textBrowser</zorder>
+   <zorder>download_pt</zorder>
+   <zorder>sel_connect</zorder>
+   <zorder>sel_get_verison</zorder>
+   <zorder>sel_bt</zorder>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>651</width>
-     <height>23</height>
+     <width>1306</width>
+     <height>22</height>
     </rect>
    </property>
   </widget>

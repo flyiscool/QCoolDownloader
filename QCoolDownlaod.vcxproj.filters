@@ -41,15 +41,56 @@
     <ClCompile Include="QCoolDownlaod.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cpThread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpCoolflyMonitor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpUpdataApp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpCMDParse.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpFlyDebug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="libusb-1.0.22\include\libusb-1.0\libusb.h">
       <Filter>Form Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpThreadSafeQueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpStructData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="libusb-1.0.22\MS64\static\libusb-1.0.lib">
       <Filter>Source Files</Filter>
     </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="cpThread.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="cpUpdataApp.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="cpCoolflyMonitor.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="cpCMDParse.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="cpFlyDebug.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
 </Project>

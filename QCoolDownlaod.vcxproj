@@ -107,6 +107,11 @@
     <QtRcc Include="QCoolDownlaod.qrc" />
     <QtUic Include="QCoolDownlaod.ui" />
     <QtMoc Include="QCoolDownlaod.h" />
+    <ClCompile Include="cpCMDParse.cpp" />
+    <ClCompile Include="cpFlyDebug.cpp" />
+    <ClCompile Include="cpThread.cpp" />
+    <ClCompile Include="cpCoolflyMonitor.cpp" />
+    <ClCompile Include="cpUpdataApp.cpp" />
     <ClCompile Include="QCoolDownlaod.cpp">
       <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
       <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).moc</QtMocFileName>
@@ -116,6 +121,14 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="cpUpdataApp.h" />
+    <QtMoc Include="cpCMDParse.h" />
+    <QtMoc Include="cpFlyDebug.h" />
+    <ClInclude Include="stdafx.h" />
+    <QtMoc Include="cpThread.h" />
+    <ClInclude Include="cpStructData.h" />
+    <ClInclude Include="cpThreadSafeQueue.h" />
+    <QtMoc Include="cpCoolflyMonitor.h" />
     <ClInclude Include="libusb-1.0.22\include\libusb-1.0\libusb.h" />
   </ItemGroup>
   <ItemGroup>

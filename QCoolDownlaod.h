@@ -3,52 +3,15 @@
 #include <QtWidgets/QMainWindow>
 #include "ui_QCoolDownlaod.h"
 #include "libusb.h"
+#include "cpThread.h"
 #include <QThread>
 #include <QMutex>
 #include <QMetaType>
-
-class CPThread : public QThread
-{
-    Q_OBJECT
-public slots:
-    virtual void stopImmediately()
-    {
-        m_isCanRun = false;
-    }
-
-    QMutex* GetMutex() { return &m_lock; }
-
-    bool IsRun()
-    {
-        return m_isCanRun;
-    };
-
-public:
-    QMutex m_lock;
-    bool m_isCanRun;
-};
-
-// The thread monitor the usb device hot-plug
-class CPThreadUsbMonitor : public CPThread
-{
-    Q_OBJECT
-public:
-    virtual void run();
-    libusb_device** devsList;
-    libusb_context* ctx;
-    libusb_device_handle* devGround;
-    libusb_device_handle* devSky;
-    int Cmd_Upgrade(libusb_device_handle* dev, QString* fileNames);
-    int Get_Upgrade_Version(libusb_device_handle* dev, unsigned char* buf);
-    int Cmd_Upgrade_V2(libusb_device_handle* dev, QString* fileNames);
-    int Cmd_Upgrade_V3(libusb_device_handle* dev, QString* fileNames);
-    void threadCPUsbMonitor_main(void);
-
-
-signals:
-    void signalupdateTextUi(QString);
-};
-
+#include "cpUpdataApp.h"
+#include "cpStructData.h"
+#include "cpCoolflyMonitor.h"
+#include "cpCMDParse.h"
+#include "cpFlyDebug.h"
 
 class QCoolDownlaod : public QMainWindow
 {
@@ -57,16 +20,26 @@ class QCoolDownlaod : public QMainWindow
   
 public:
     QCoolDownlaod(QWidget *parent = Q_NULLPTR);
+    ~QCoolDownlaod(void);
 
+    QString g_fileNames;
 
 public slots:
     void slotselfile(void);
     void slotdownloadfileflag(void);
     void slotupdateTextUi(QString);
+    void slotconnectusb(void);
+    void slotsetbt_connect_color(State_LED st);
+    void slotcmd_get_version(void);
+    void slotcmd_get_setting(void);
+    void slotflydebug_start(void);
+    void slotflydebug_stop(void);
 private:
     Ui::QCoolDownlaodClass ui;
     CPThreadUsbMonitor		thUsbMonitor;
+    CPThreadCoolflyMonitor	thCoolflyMonitor;
+    CPThreadCMDParse	thThreadCMDParse;
+    CPThreadFlyDebug	thThreadFlyDebug;
+    CPThreadFlyDebugParse	thThreadFlyDebugParse;
 };
-
-
 
