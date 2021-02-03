@@ -86,7 +86,7 @@ void CPThreadUsbMonitor::threadCPUsbMonitor_main(void)
             emit signalupdateTextUi("Cannot Claim Interface");
             libusb_free_device_list(devsList, 1);
             devGround = NULL;
-
+            libusb_free_device_list(devsList, 1);
             return;
         }
 
@@ -462,15 +462,8 @@ int CPThreadUsbMonitor::Cmd_Upgrade_V2(libusb_device_handle* dev, QString* upgra
         }
             
         for (j = 0; j < wait_time; j++)
-        {
-            Sleep(10);
-            
-            qDebug() << "nCurrentFrame = " << nCurrentFrame <<endl;
-            
+        {   
             r = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_IN, pkg_ret, 512, &transferred, 100);
-            
-            qDebug() << "r = " << r << endl;
-
             if ((r < 0)&&(nCurrentFrame == 0))
             {
                 ret = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_OUT, buffer, length + 10, &transferred, 1000);

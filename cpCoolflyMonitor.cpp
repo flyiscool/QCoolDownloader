@@ -57,7 +57,7 @@ void CPThreadCoolflyMonitor::threadCPCoolflyMonitor_main(CPThreadCoolflyMonitor*
 	CMDBuffPackage* cmdtx;
 	CMDBuffPackage* cmdrx;
 	CMDBuffPackage* giveup;
-	while (m_isCanRun){
+	while (m_isCanRun) {
 
 		// exit 
 		if (!(pCPthThis->IsRun())) {
@@ -74,21 +74,21 @@ void CPThreadCoolflyMonitor::threadCPCoolflyMonitor_main(CPThreadCoolflyMonitor*
 			{
 				libusb_close(pCPthThis->devGround);
 			}
-			
+
 			if (pCPthThis->ctx != NULL)
 			{
 				//libusb_exit(pCPthThis->ctx); //close the sessio
 			}
 			pCPthThis->ctx = NULL;
-	
 			return;
 		}
 
 		// fresh the dev Ground
 		if (pCPthThis->devGround == NULL)
 		{
+
 			int cnt_dev = libusb_get_device_list(NULL, &pCPthThis->devsList); //get the list of devices
-			if (cnt_dev < 0){
+			if (cnt_dev < 0) {
 				emit signalupdateTextUi("Error in enumerating devices !");
 				continue;
 			}
@@ -97,13 +97,13 @@ void CPThreadCoolflyMonitor::threadCPCoolflyMonitor_main(CPThreadCoolflyMonitor*
 			if (pCPthThis->devGround == NULL) {
 				emit signalupdateTextUi("Can't find the device Ground");
 				emit pCPthThis->signalupdateStateLED(error);
-				
+
 				libusb_free_device_list(pCPthThis->devsList, 1);
 				pCPthThis->msleep(1000);
 				continue;
 			}
 			else
-			{	
+			{
 				r = libusb_claim_interface(pCPthThis->devGround, IFCMD); //claim interface 0 (the first) of device (mine had jsut 1)
 				if (r < 0) {
 					emit signalupdateTextUi("Cannot Claim Interface");
@@ -115,18 +115,20 @@ void CPThreadCoolflyMonitor::threadCPCoolflyMonitor_main(CPThreadCoolflyMonitor*
 			}
 		}
 
-		if (gListTXCMD.size() > 0)
+		if (pCPthThis->devGround != NULL)
 		{
-			gListTXCMD.try_front(cmdtx);
-			
-			r = libusb_interrupt_transfer(pCPthThis->devGround, ENDPOINT_CMD_OUT, cmdtx->data, cmdtx->length, &transferred, 1000);
-			switch (r)
+			if (gListTXCMD.size() > 0)
 			{
-				case 0:	
+				gListTXCMD.try_front(cmdtx);
+
+				r = libusb_interrupt_transfer(pCPthThis->devGround, ENDPOINT_CMD_OUT, cmdtx->data, cmdtx->length, &transferred, 1000);
+				switch (r)
+				{
+				case 0:
 					gListTXCMD.try_pop(cmdtx);
 					delete cmdtx;
 					emit signalupdateTextUi("TXCMD SEND SUCCESS");
-				break;
+					break;
 
 				case LIBUSB_ERROR_TIMEOUT:	// timeout also need to check the transferred;
 					emit signalupdateTextUi("TXCMD SEND FAILED");
@@ -134,6 +136,7 @@ void CPThreadCoolflyMonitor::threadCPCoolflyMonitor_main(CPThreadCoolflyMonitor*
 				case LIBUSB_ERROR_PIPE:	// the endpoint halted,so  retry to open the interface.
 					emit signalupdateTextUi("TXCMD endpoint halted. LIBUSB_ERROR_PIPE");
 					pCPthThis->devGround = NULL;
+					libusb_free_device_list(pCPthThis->devsList, 1);
 					pCPthThis->msleep(500);
 					break;
 				case LIBUSB_ERROR_OVERFLOW:	 // give up the data because it's maybe lost. need fix.
@@ -143,70 +146,74 @@ void CPThreadCoolflyMonitor::threadCPCoolflyMonitor_main(CPThreadCoolflyMonitor*
 				case LIBUSB_ERROR_NO_DEVICE: // maybe lost the device.
 					emit signalupdateTextUi("TXCMD device lost. LIBUSB_ERROR_NO_DEVICE");
 					break;
-				case LIBUSB_ERROR_BUSY:			
+				case LIBUSB_ERROR_BUSY:
 					emit signalupdateTextUi("TXCMD LIBUSB_ERROR_BUSY");
 					pCPthThis->msleep(500);
 					break;
 				default:
 					emit signalupdateTextUi("TXCMD error unknow :");
 					break;
+				}
 			}
 		}
 
-		transferred = 0;
-		cmdrx = new CMDBuffPackage;
-		r = libusb_interrupt_transfer(pCPthThis->devGround, ENDPOINT_CMD_IN, cmdrx->data, 512, &transferred, 200);
-		switch (r)
-		{
-		case 0:
-			cmdrx->length = transferred;
-			temp.sprintf("RXCMD rx = %d", transferred);
-			emit signalupdateTextUi(temp);
-			if (0 == gListRXCMD.push(cmdrx, giveup, 1000))
+		if (pCPthThis->devGround != NULL)
+		{ 
+			transferred = 0;
+			cmdrx = new CMDBuffPackage;
+			r = libusb_interrupt_transfer(pCPthThis->devGround, ENDPOINT_CMD_IN, cmdrx->data, 512, &transferred, 200);
+			switch (r)
 			{
-				emit signalupdateTextUi("RXCMD LIST is Full,Give Up the oldest package");
-				delete giveup;
-			}
-			break;
-
-		case LIBUSB_ERROR_TIMEOUT:	// timeout also need to check the transferred;
-			if (transferred == 0)
-			{
-				delete cmdrx;
-			}
-			else
-			{			
+			case 0:
 				cmdrx->length = transferred;
-				temp.sprintf("time out RXCMD rx = %d", transferred);
+				temp.sprintf("RXCMD rx = %d", transferred);
 				emit signalupdateTextUi(temp);
 				if (0 == gListRXCMD.push(cmdrx, giveup, 1000))
 				{
 					emit signalupdateTextUi("RXCMD LIST is Full,Give Up the oldest package");
 					delete giveup;
 				}
+				break;
+
+			case LIBUSB_ERROR_TIMEOUT:	// timeout also need to check the transferred;
+				if (transferred == 0)
+				{
+					delete cmdrx;
+				}
+				else
+				{			
+					cmdrx->length = transferred;
+					temp.sprintf("time out RXCMD rx = %d", transferred);
+					emit signalupdateTextUi(temp);
+					if (0 == gListRXCMD.push(cmdrx, giveup, 1000))
+					{
+						emit signalupdateTextUi("RXCMD LIST is Full,Give Up the oldest package");
+						delete giveup;
+					}
+				}
+				break;
+			case LIBUSB_ERROR_PIPE:	// the endpoint halted,so  retry to open the interface.
+				emit signalupdateTextUi("TXCMD endpoint halted. LIBUSB_ERROR_PIPE");
+				pCPthThis->devGround = NULL;
+				libusb_free_device_list(pCPthThis->devsList, 1);
+				pCPthThis->msleep(500);
+				break;
+			case LIBUSB_ERROR_OVERFLOW:	 // give up the data because it's maybe lost. need fix.
+				emit signalupdateTextUi("TXCMD Buff is to small. LIBUSB_ERROR_OVERFLOW");
+				break;
+
+			case LIBUSB_ERROR_NO_DEVICE: // maybe lost the device.
+				emit signalupdateTextUi("TXCMD device lost. LIBUSB_ERROR_NO_DEVICE");
+				break;
+			case LIBUSB_ERROR_BUSY:
+				emit signalupdateTextUi("TXCMD LIBUSB_ERROR_BUSY");
+				pCPthThis->msleep(500);
+				break;
+			default:
+				emit signalupdateTextUi("TXCMD error unknow :");
+				break;
 			}
-			break;
-		case LIBUSB_ERROR_PIPE:	// the endpoint halted,so  retry to open the interface.
-			emit signalupdateTextUi("TXCMD endpoint halted. LIBUSB_ERROR_PIPE");
-			pCPthThis->devGround = NULL;
-			pCPthThis->msleep(500);
-			break;
-		case LIBUSB_ERROR_OVERFLOW:	 // give up the data because it's maybe lost. need fix.
-			emit signalupdateTextUi("TXCMD Buff is to small. LIBUSB_ERROR_OVERFLOW");
-			break;
-
-		case LIBUSB_ERROR_NO_DEVICE: // maybe lost the device.
-			emit signalupdateTextUi("TXCMD device lost. LIBUSB_ERROR_NO_DEVICE");
-			break;
-		case LIBUSB_ERROR_BUSY:
-			emit signalupdateTextUi("TXCMD LIBUSB_ERROR_BUSY");
-			pCPthThis->msleep(500);
-			break;
-		default:
-			emit signalupdateTextUi("TXCMD error unknow :");
-			break;
 		}
-
 	}
 
 
@@ -228,6 +235,7 @@ void CPThreadCoolflyMonitor::threadCPCoolflyMonitor_main(CPThreadCoolflyMonitor*
 		//libusb_exit(pCPthThis->ctx); //close the sessio
 	}
 	pCPthThis->ctx = NULL;
+	
 }
 
 void CPThreadCoolflyMonitor::run()

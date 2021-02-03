@@ -364,6 +364,62 @@ typedef struct
 } STRU_FACTORY_SETTING;
 
 
+typedef struct
+{
+    uint8_t         skyGround;
+    uint8_t         band;
+    uint8_t         bandWidth;
+    uint8_t         itHopMode;
+    uint8_t         rcHopping;
+    uint8_t         adapterBitrate;
+    uint8_t         channel1_on;
+    uint8_t         channel2_on;
+    uint8_t         isDebug;
+    uint8_t         itQAM;
+    uint8_t         itCodeRate;
+    uint8_t         rcQAM;
+    uint8_t         rcCodeRate;
+    uint8_t         ch1Bitrates;
+    uint8_t         ch2Bitrates;
+    uint8_t         reserved[1];//define to display power value
+    uint8_t         u8_itRegs[4];
+    uint8_t         u8_rcRegs[4];
+    uint8_t         rvc : 4;
+    uint8_t         sleep_level : 2;
+    uint8_t         switch_mode_2g_5g : 1;
+    uint8_t         pure_vt_valid : 1;
+    uint8_t         rcId[5];
+    uint8_t         chipId[5];
+
+    uint8_t         vtid[2];
+    uint8_t         en_realtime;
+    uint8_t         inSearching;
+    //lna_status define
+    //bit[0] : 0,lna open , 1 lna close ( lna bypass).   
+    //bit[2:1] : 0,always lna open mode, 1, alway lna close mode, 2 lna auto mode
+    //bit[6:3] : bandedge lower power value; range value [0,15]
+    //bit[7] : bandedge enable flag, 1 enable, 0 disable 
+    uint8_t         lna_status;
+    uint8_t         u8_startWrite;  //u8_startWrite: cpu2 start update the flag
+    uint8_t         u8_endWrite;    //u8_endWrite:   cpu2 end update the flag
+} STRU_DEVICE_INFO;
+
+typedef struct
+{
+    QStringList top_labelList;
+
+    //item list
+    QList<QTreeWidgetItem*> items;
+
+    // item
+    QTreeWidgetItem f_uart3_baudrate;
+    QStringList l_uart3_baudrate;
+
+    QTreeWidgetItem f_uart3_bypassmode;
+    QStringList l_uart3_bypassmode;
+
+   
+} TAB_FACTORY_SET;
 
 
 //////////////////////////////////////////////////////
@@ -449,3 +505,25 @@ typedef  struct {
     uint32_t end;
     /* data */
 } flight_data_t;
+
+
+
+
+#define  CMD_DEVICE_INFO    0x0019
+#define  CMD_CF_PROTOCOL_TX 0x0092
+#define  CMD_CF_PROTOCOL_RX 0x0093
+
+
+
+#define CF_PRO_MSGID_CAMERA  0x28
+#define MSGID_CAMERA_TAKE_PIC  0x01
+#define MSGID_CAMERA_RECORD_START  0x02
+#define MSGID_CAMERA_RECORD_STOP  0x00
+
+
+
+#define CF_PRO_MSGID_CALIBRATE   0x06
+
+#define MSGID_CALIBRATE_MAG     0x02
+#define MSGID_CALIBRATE_IMU     0x03
+

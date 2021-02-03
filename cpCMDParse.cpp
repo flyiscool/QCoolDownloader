@@ -10,7 +10,9 @@ extern threadsafe_queue<CMDBuffPackage*> gListRXCMD;
 
 STRU_VER_INFO cf_ver_info;
 STRU_FACTORY_SETTING cf_factroy_setting;
+STRU_DEVICE_INFO cf_device_info;
 bool cf_checksum(CMDBuffPackage* cmdrx);
+
 
 void CPThreadCMDParse::run()
 {
@@ -126,11 +128,9 @@ void CPThreadCMDParse::CMDParse_main()
 			break;
 
 			case 0x005C: // FACTORY SETTING
-
-
 				for (i = 0; i < msg_rx_head.msg_len; i++)
 				{
-					buff[msg_rx_head.packet_cur * 502 + i] = cmdrx->data[i];
+					buff[msg_rx_head.packet_cur * 502 + i] = cmdrx->data[i+10];
 				}
 
 				if (msg_rx_head.packet_cur == (msg_rx_head.packet_num - 1))
@@ -138,19 +138,59 @@ void CPThreadCMDParse::CMDParse_main()
 					if ((msg_rx_head.packet_cur * 502 + msg_rx_head.msg_len) == sizeof(STRU_FACTORY_SETTING))
 					{
 						memcpy(&cf_factroy_setting, buff, sizeof(STRU_FACTORY_SETTING));
-						emit signalupdateTextUi("STRU_FACTORY_SETTING  get success");
+						qDebug() << sizeof(STRU_FACTORY_SETTING) << endl;
+						emit signalupdateFactorySetting();
+						emit signalupdateTextUi("STRU_FACTORY_SETTING GET SUCCESS");
+						
 					}
 				}
-
-				//emit signalupdateTextUi("hardware_ver :" + cf_ver_info.hardware_ver);
-				//emit signalupdateTextUi("sdk_ver :" + cf_ver_info.sdk_ver);
-				//emit signalupdateTextUi("sdk_build_time :" + cf_ver_info.sdk_build_time);
-				//emit signalupdateTextUi("boot_ver :" + cf_ver_info.boot_ver);
-				//emit signalupdateTextUi("boot_build_time :" + cf_ver_info.boot_build_time);
-
 				break;
 
-		}
+			case 0x005D: // SAVE FACTORY SETTING
+				if (cmdrx->data[10] == 0x01)
+				{
+					emit signalupdateTextUi("SAVE_FACTORY_SETTING SUCCESS");
+				}
+				else
+				{
+					emit signalupdateTextUi("SAVE_FACTORY_SETTING FAILED");
+				}
+				break;
+
+			case 0x000A: // reboot
+				if (cmdrx->data[10] == 0x01)
+				{
+					emit signalupdateTextUi("REBOOT SUCCESS");
+				}
+				else
+				{
+					emit signalupdateTextUi("REBOOT FAILED");
+				}
+				break;
+		
+			case 0x0019: // device info
+				for (i = 0; i < msg_rx_head.msg_len; i++)
+				{
+					buff[msg_rx_head.packet_cur * 502 + i] = cmdrx->data[i + 10];
+				}
+
+				if (msg_rx_head.packet_cur == (msg_rx_head.packet_num - 1))
+				{
+					if ((msg_rx_head.packet_cur * 502 + msg_rx_head.msg_len) == sizeof(STRU_DEVICE_INFO))
+					{
+						memcpy(&cf_device_info, buff, sizeof(STRU_DEVICE_INFO));
+						
+						emit signalupdateChipID();
+						emit signalupdateTextUi("STRU_DEVICE_INFO GET SUCCESS");
+					}
+				}
+				break;
+
+			case 0x0093: // cf_protocol read info
+				qDebug() << cmdrx->length << endl;
+				break;
+				
+}
 
 
 		delete cmdrx;

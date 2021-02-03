@@ -171,6 +171,7 @@ void CPThreadFlyDebug::threadCPFlyDebug_main(CPThreadFlyDebug* pCPThreadFlyDebug
 		case LIBUSB_ERROR_PIPE:	// the endpoint halted,so  retry to open the interface.
 			emit signalupdateTextUi("RXFLYDEBUG endpoint halted. LIBUSB_ERROR_PIPE");
 			pCPthThis->devGround = NULL;
+			libusb_free_device_list(pCPthThis->devsList, 1);
 			pCPthThis->msleep(500);
 			break;
 		case LIBUSB_ERROR_OVERFLOW:	 // give up the data because it's maybe lost. need fix.

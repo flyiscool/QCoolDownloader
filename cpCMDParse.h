@@ -22,6 +22,8 @@ public:
 signals:
 	void signalFrameRateUpdate(int);
 	void signalupdateTextUi(QString);
+	void signalupdateFactorySetting(void);
+	void signalupdateChipID(void);
 };
 
 
