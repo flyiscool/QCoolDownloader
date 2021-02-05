@@ -226,7 +226,7 @@ void CPThreadCoolflyMonitor::threadCPCoolflyMonitor_main(CPThreadCoolflyMonitor*
 		{
 			if (update_app_flag == true)
 			{
-				r = Cmd_Upgrade_V2(pCPthThis->devGround, &file);
+				r = CMD_UPGRADE_LOCAL_APP(pCPthThis->devGround, &file);
 				switch (r)
 				{
 				case 0:
@@ -258,7 +258,41 @@ void CPThreadCoolflyMonitor::threadCPCoolflyMonitor_main(CPThreadCoolflyMonitor*
 			}
 		}
 
+		if (pCPthThis->devGround != NULL)		// process update_remote_app
+		{
+			if (update_remote_app_flag == true)
+			{
+				r = CMD_UPGRADE_REMOTE_APP(pCPthThis->devGround, &file);
+				switch (r)
+				{
+				case 0:
+					break;
 
+				case LIBUSB_ERROR_TIMEOUT:	// timeout also need to check the transferred;
+					break;
+				case LIBUSB_ERROR_PIPE:	// the endpoint halted,so  retry to open the interface.
+					emit signalupdateTextUi("UPDATE_APP endpoint halted. LIBUSB_ERROR_PIPE");
+					pCPthThis->devGround = NULL;
+					libusb_free_device_list(pCPthThis->devsList, 1);
+					pCPthThis->msleep(500);
+					break;
+				case LIBUSB_ERROR_OVERFLOW:	 // give up the data because it's maybe lost. need fix.
+					emit signalupdateTextUi("UPDATE_APP is to small. LIBUSB_ERROR_OVERFLOW");
+					break;
+
+				case LIBUSB_ERROR_NO_DEVICE: // maybe lost the device.
+					emit signalupdateTextUi("UPDATE_APP device lost. LIBUSB_ERROR_NO_DEVICE");
+					break;
+				case LIBUSB_ERROR_BUSY:
+					emit signalupdateTextUi("UPDATE_APP LIBUSB_ERROR_BUSY");
+					pCPthThis->msleep(500);
+					break;
+				default:
+					emit signalupdateTextUi("UPDATE_APP error unknow :");
+					break;
+				}
+			}
+		}
 	}
 
 

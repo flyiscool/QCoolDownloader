@@ -32,21 +32,6 @@ void QCoolDownlaod::slotselfile(void)
     ui.statusBar->showMessage(fileNames, 5000);
 }
 
-void QCoolDownlaod::slotdownloadfileflag(void)
-{
-    //thCoolflyMonitor.stopImmediately();
-    //thCoolflyMonitor.wait();
-
-    //thThreadCMDParse.stopImmediately();
-    //thThreadCMDParse.wait();
-
-
-    //thUsbMonitor.setfilename(fileNames);
-    //thUsbMonitor.start();
-
- }
-
-
 void QCoolDownlaod::slotupdateTextUi(QString text)
 {
     ui.textBrowser->append(text);
@@ -131,8 +116,6 @@ QCoolDownlaod::QCoolDownlaod(QWidget* parent)
 
     connect(ui.sel_bt, SIGNAL(clicked()), this, SLOT(slotselfile()));
 
-    connect(ui.download_pt, SIGNAL(clicked()), this, SLOT(slotdownloadfileflag()));
-
     connect(&thCoolflyMonitor, SIGNAL(signalupdateTextUi(QString)), this, SLOT(slotupdateTextUi(QString)));
     connect(&thThreadCMDParse, SIGNAL(signalupdateTextUi(QString)), this, SLOT(slotupdateTextUi(QString)));
     connect(&thThreadFlyDebug, SIGNAL(signalupdateTextUi(QString)), this, SLOT(slotupdateTextUi(QString)));
@@ -142,12 +125,14 @@ QCoolDownlaod::QCoolDownlaod(QWidget* parent)
     connect(&thCoolflyMonitor, SIGNAL(signalupdateStateLED(State_LED)), this, SLOT(slotsetbt_connect_color(State_LED)));
 
     connect(&thCoolflyMonitor, SIGNAL(signalreboot()), this, SLOT(slotcmd_reboot()));
+    connect(&thCoolflyMonitor, SIGNAL(signalremotereboot()), this, SLOT(slotcmd_systemstate_rboot()));
 
     connect(ui.sel_get_verison, SIGNAL(clicked()), this, SLOT(slotcmd_get_version()));
     connect(ui.bt_get_setting, SIGNAL(clicked()), this, SLOT(slotcmd_get_setting()));
     connect(ui.bt_save_setting, SIGNAL(clicked()), this, SLOT(slotcmd_save_setting()));
     connect(ui.bt_cf_protocol, SIGNAL(clicked()), this, SLOT(slotcmd_start_cf_protocol()));
     connect(ui.bt_usb_update, SIGNAL(clicked()), this, SLOT(slotcmd_usb_update()));
+    connect(ui.bt_usb_update_sky, SIGNAL(clicked()), this, SLOT(slotcmd_usb_remote_update()));
 
     connect(ui.bt_flydebugstart, SIGNAL(clicked()), this, SLOT(slotflydebug_start()));
     connect(ui.bt_flydebugstop, SIGNAL(clicked()), this, SLOT(slotflydebug_stop()));
@@ -1000,7 +985,6 @@ void QCoolDownlaod::slotcmd_systemstate_rboot(void)
     }
 }
 
-
 void QCoolDownlaod::slotcmd_usb_update(void)
 {
     int32_t fsize;
@@ -1029,6 +1013,36 @@ void QCoolDownlaod::slotcmd_usb_update(void)
     thCoolflyMonitor.file = fileNames;
     thCoolflyMonitor.update_app_flag = true;
     
+}
+
+
+
+void QCoolDownlaod::slotcmd_usb_remote_update(void)
+{
+    int32_t fsize;
+    QString pri;
+    //upgrade send data
+
+    if (fileNames == NULL)
+    {
+        pri.sprintf("please select the app.bin file !!!!");
+        ui.textBrowser->append(pri);
+        return;
+    }
+
+    fsize = Get_File_Size(&fileNames);
+    pri.sprintf("get file size: %d K", fsize / 1024);
+    ui.textBrowser->append(pri);
+
+    if (fsize > 0x300000)
+    {
+        pri.sprintf(" file is to big,not the app.bin");
+        ui.textBrowser->append(pri);
+        return;
+    }
+
+    thCoolflyMonitor.file = fileNames;
+    thCoolflyMonitor.update_remote_app_flag = true;
 }
 
 

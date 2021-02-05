@@ -63,7 +63,7 @@ int Get_File_Size(QString* filename)
 
 
 
-int CPThreadCoolflyMonitor::Cmd_Upgrade_V2(libusb_device_handle* dev, QString* upgrade_file)
+int CPThreadCoolflyMonitor::CMD_UPGRADE_LOCAL_APP(libusb_device_handle* dev, QString* upgrade_file)
 {
     int i, j;
     int fsize;
@@ -240,6 +240,191 @@ int CPThreadCoolflyMonitor::Cmd_Upgrade_V2(libusb_device_handle* dev, QString* u
             emit signalupdateTextUi(temp2);
         }
 
+    }
+
+    return 0;
+}
+
+
+
+
+int CPThreadCoolflyMonitor::CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QString* upgrade_file)
+{
+    int i, j;
+    int fsize;
+    int fsize2 = 0;
+    FILE* fd;
+    int ret;
+
+    unsigned char buffer[512];
+    unsigned char pkg_ret[512];
+    int totalframe;
+    int nCurrentFrame = 0;
+    int length;
+    unsigned int sum;
+    int wait_time;
+    int need_retry = 0;
+
+    unsigned char tbuff[512];
+    int transferred = 1;
+    int r;
+
+    do {
+        r = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_IN, tbuff, 512, &transferred, 1000);
+        if ((r != 0) && (r != LIBUSB_ERROR_TIMEOUT))
+        {
+            return r;
+        }
+    } while (transferred != 0);
+
+    //upgrade send data
+    fsize = Get_File_Size(upgrade_file);
+
+    totalframe = (fsize + 495) / 496;
+
+    std::string str = upgrade_file->toStdString();
+    const char* file = str.c_str();
+
+    UTF8ToUnicode(file, strUnicode);
+    fd = _wfopen(strUnicode, L"rb");
+
+    if (fd < 0)
+    {
+        emit signalupdateTextUi("upgrade file not exist ");
+        return 0;
+    }
+
+    while (m_isCanRun)
+    {
+        if (need_retry == 0)
+        {
+            length = fread(buffer + 16, 1, 496, fd);
+
+            if (length <= 0)
+            {
+                emit signalupdateTextUi("length <= 0");
+                fclose(fd);
+                return 0;
+            }
+
+            length += 6; //data length
+
+            buffer[0] = 0xff;
+            buffer[1] = 0x5a;
+            buffer[2] = 0x01;
+            buffer[3] = 0x00;
+            buffer[4] = 0x01;
+            buffer[5] = 0x00;
+            buffer[6] = (char)length;
+            buffer[7] = (char)(length >> 8);
+
+            buffer[10] = 0x01;  // remote app
+            buffer[11] = 0;
+            buffer[12] = (char)nCurrentFrame;
+            buffer[13] = (char)(nCurrentFrame >> 8);
+            buffer[14] = (char)totalframe;
+            buffer[15] = (char)(totalframe >> 8);
+
+            //add check for frame
+            for (i = 0, sum = 0; i < length; i++)
+            {
+                sum += (unsigned char)buffer[i + 10];
+            }
+            buffer[8] = (char)sum;
+            buffer[9] = (char)(sum >> 8);
+        }
+
+        ret = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_OUT, buffer, length + 10, &transferred, 1000);
+
+        if (nCurrentFrame < (totalframe - 1))
+        {
+            wait_time = 200;
+        }
+        else
+        {
+            wait_time = 2000;
+            emit signalupdateTextUi("waiting for the ACK... about 10 secound ");
+        }
+
+        for (j = 0; j < wait_time; j++)
+        {
+            Sleep(40);
+            r = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_IN, pkg_ret, 512, &transferred, 100);
+            if ((r < 0) && (nCurrentFrame == 0))
+            {
+                ret = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_OUT, buffer, length + 10, &transferred, 1000);
+            }
+
+            if (transferred > 0)
+            {
+                //pkg okg
+                if (pkg_ret[0] == 0xff && pkg_ret[1] == 0x5a
+                    && pkg_ret[2] == 0x01 && pkg_ret[3] == 0x00 && pkg_ret[10] == 0x01)
+                {
+                    nCurrentFrame++;
+                    if (nCurrentFrame == totalframe)
+                    {
+                        QString temp;
+                        temp.sprintf("progress : %d / %d ", nCurrentFrame, totalframe);
+                        emit signalupdateTextUi(temp);
+                        emit signalupdateTextUi("upgrade successed");
+
+                        update_remote_app_flag = false;
+                        emit signalreboot();
+
+                        return 0;
+                    }
+                    else
+                        break;
+                }
+                //pkg failed
+                else if (pkg_ret[0] == 0xff && pkg_ret[1] == 0x5a
+                    && pkg_ret[2] == 0x01 && pkg_ret[3] == 0x00 && pkg_ret[10] == 0x00)
+                {
+                    //last pkg failed
+                    if (wait_time == 2000)
+                    {
+                        emit signalupdateTextUi("========================================================");
+                        emit signalupdateTextUi("upgrade failed ,Please restart the module and update it");
+                        emit signalupdateTextUi("========================================================");
+
+                        return 0;
+                    }
+                    //common pkg failed
+                    else
+                    {
+                        j = wait_time;
+                        break;
+                    }
+                }
+                //pkg no ack
+                else
+                    continue;
+            }
+        }
+
+        if (j == wait_time)
+        {
+            need_retry++;
+            if (need_retry > 5)
+            {
+
+                emit signalupdateTextUi("========================================================");
+                emit signalupdateTextUi("upgrade failed ,Please restart the module and update it");
+                emit signalupdateTextUi("========================================================");
+                update_app_flag = false;
+                return 0;
+            }
+        }
+        else
+            need_retry = 0;
+
+        if ((nCurrentFrame % 10 == 0) || (nCurrentFrame == (totalframe - 1)))
+        {
+            QString temp2;
+            temp2.sprintf("progress : %d / %d", nCurrentFrame, totalframe);
+            emit signalupdateTextUi(temp2);
+        }
     }
 
     return 0;

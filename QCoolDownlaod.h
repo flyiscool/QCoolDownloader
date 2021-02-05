@@ -26,7 +26,6 @@ public:
 
 public slots:
     void slotselfile(void);
-    void slotdownloadfileflag(void);
     void slotupdateTextUi(QString);
     void slotconnectusb(void);
     void slotsetbt_connect_color(State_LED st);
@@ -44,6 +43,7 @@ public slots:
 
     void slotcmd_reboot(void);
     void slotcmd_usb_update(void);
+    void slotcmd_usb_remote_update(void);
 
     void slotflydebug_start(void);
     void slotflydebug_stop(void);

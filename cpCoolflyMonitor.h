@@ -17,11 +17,13 @@ public:
 	void threadCPCoolflyMonitor_main(CPThreadCoolflyMonitor* pCPThreadCoolflyMonitor);
 	QString file;
 	bool update_app_flag = false;
-	int Cmd_Upgrade_V2(libusb_device_handle* dev, QString* upgrade_file);
+	bool update_remote_app_flag = false;
+	int CMD_UPGRADE_LOCAL_APP(libusb_device_handle* dev, QString* upgrade_file);
+	int CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QString* upgrade_file);
 
 signals:
 	void signalupdateStateLED(State_LED);
 	void signalupdateTextUi(QString);
 	void signalreboot(void);
-	
+	void signalremotereboot(void);
 };
