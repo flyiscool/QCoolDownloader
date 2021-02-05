@@ -70,6 +70,9 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cpUpdataApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="libusb-1.0.22\MS64\static\libusb-1.0.lib">
@@ -78,9 +81,6 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="cpThread.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="cpUpdataApp.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="cpCoolflyMonitor.h">

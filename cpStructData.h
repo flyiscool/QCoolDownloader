@@ -510,20 +510,24 @@ typedef  struct {
 
 
 #define  CMD_DEVICE_INFO    0x0019
-#define  CMD_CF_PROTOCOL_TX 0x0092
+#define  CMD_CF_PROTOCOL_TX 0x0094
 #define  CMD_CF_PROTOCOL_RX 0x0093
 
 
 
-#define CF_PRO_MSGID_CAMERA  0x28
-#define MSGID_CAMERA_TAKE_PIC  0x01
-#define MSGID_CAMERA_RECORD_START  0x02
-#define MSGID_CAMERA_RECORD_STOP  0x00
-
-
+#define CF_PRO_MSGID_SYSTEM      0x01
+#define     MSGID_REBOOT            0x01
 
 #define CF_PRO_MSGID_CALIBRATE   0x06
+#define     MSGID_CALIBRATE_MAG     0x02
+#define     MSGID_CALIBRATE_IMU     0x03
 
-#define MSGID_CALIBRATE_MAG     0x02
-#define MSGID_CALIBRATE_IMU     0x03
+
+#define CF_PRO_MSGID_CAMERA      0x28
+#define     MSGID_CAMERA_TAKE_PIC       0x01
+#define     MSGID_CAMERA_RECORD_START   0x02
+#define     MSGID_CAMERA_RECORD_STOP    0x00
+
+
+
 

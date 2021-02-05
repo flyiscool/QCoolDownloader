@@ -66,7 +66,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab_setting">
      <attribute name="title">
@@ -121,8 +121,8 @@
      <widget class="QPushButton" name="sel_bt">
       <property name="geometry">
        <rect>
-        <x>30</x>
-        <y>50</y>
+        <x>70</x>
+        <y>40</y>
         <width>80</width>
         <height>30</height>
        </rect>
@@ -134,14 +134,40 @@
      <widget class="QPushButton" name="download_pt">
       <property name="geometry">
        <rect>
-        <x>30</x>
-        <y>110</y>
+        <x>300</x>
+        <y>40</y>
         <width>80</width>
         <height>30</height>
        </rect>
       </property>
       <property name="text">
        <string>download</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bt_usb_update">
+      <property name="geometry">
+       <rect>
+        <x>70</x>
+        <y>80</y>
+        <width>80</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>USB 升级</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_update">
+      <property name="geometry">
+       <rect>
+        <x>70</x>
+        <y>240</y>
+        <width>951</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>please select file .bin</string>
       </property>
      </widget>
     </widget>
@@ -764,7 +790,7 @@
    </widget>
    <widget class="QPushButton" name="bt_reboot">
     <property name="enabled">
-     <bool>false</bool>
+     <bool>true</bool>
     </property>
     <property name="geometry">
      <rect>
@@ -794,12 +820,29 @@
      <string>clear log</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="bt_reboot_sky">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>240</x>
+      <y>0</y>
+      <width>80</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>reboot sky</string>
+    </property>
+   </widget>
    <zorder>tabWidget</zorder>
    <zorder>textBrowser</zorder>
    <zorder>sel_connect</zorder>
    <zorder>sel_get_verison</zorder>
    <zorder>bt_reboot</zorder>
    <zorder>bt_clear_log</zorder>
+   <zorder>bt_reboot_sky</zorder>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">

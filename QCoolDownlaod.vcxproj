@@ -121,7 +121,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="cpUpdataApp.h" />
+    <ClInclude Include="cpUpdataApp.h" />
     <QtMoc Include="cpCMDParse.h" />
     <QtMoc Include="cpFlyDebug.h" />
     <ClInclude Include="stdafx.h" />

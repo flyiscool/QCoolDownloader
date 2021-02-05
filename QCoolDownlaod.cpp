@@ -9,6 +9,7 @@
 #include <QMetaType>
 #include "cpThreadSafeQueue.h"
 #include "cpStructData.h"
+#include "cpUpdataApp.h"
 
 extern threadsafe_queue<CMDBuffPackage*> gListTXCMD;
 extern threadsafe_queue<CMDBuffPackage*> gListRXCMD;
@@ -23,24 +24,25 @@ QString int8_t2Str(uint8_t* data, int len, int filedwidth, int base);
 
 void QCoolDownlaod::slotselfile(void)
 {
-	g_fileNames = QFileDialog::getOpenFileName(this, tr("open file"), " ", tr("bin(*.bin)"));
+	fileNames = QFileDialog::getOpenFileName(this, tr("open file"), " ", tr("bin(*.bin)"));
 
-	ui.textBrowser->setText(g_fileNames);
+    ui.label_update->setText(fileNames);
+	ui.textBrowser->setText(fileNames);
 
-    ui.statusBar->showMessage(g_fileNames, 5000);
+    ui.statusBar->showMessage(fileNames, 5000);
 }
 
 void QCoolDownlaod::slotdownloadfileflag(void)
 {
-    thCoolflyMonitor.stopImmediately();
-    thCoolflyMonitor.wait();
+    //thCoolflyMonitor.stopImmediately();
+    //thCoolflyMonitor.wait();
 
-    thThreadCMDParse.stopImmediately();
-    thThreadCMDParse.wait();
+    //thThreadCMDParse.stopImmediately();
+    //thThreadCMDParse.wait();
 
 
-    thUsbMonitor.setfilename(g_fileNames);
-    thUsbMonitor.start();
+    //thUsbMonitor.setfilename(fileNames);
+    //thUsbMonitor.start();
 
  }
 
@@ -70,9 +72,6 @@ void QCoolDownlaod::slotconnectusb(void)
         thThreadFlyDebugParse.stopImmediately();
         thThreadFlyDebugParse.wait();
 
-        thUsbMonitor.stopImmediately();
-        thUsbMonitor.wait();
-
         thCoolflyMonitor.start();
         thThreadCMDParse.start();
 
@@ -92,9 +91,6 @@ void QCoolDownlaod::slotconnectusb(void)
 
         thThreadFlyDebugParse.stopImmediately();
         thThreadFlyDebugParse.wait();
-
-        thUsbMonitor.stopImmediately();
-        thUsbMonitor.wait();
 
         ui.sel_connect->setStyleSheet("background-color: rgb(220,220,220)");
     }
@@ -137,7 +133,6 @@ QCoolDownlaod::QCoolDownlaod(QWidget* parent)
 
     connect(ui.download_pt, SIGNAL(clicked()), this, SLOT(slotdownloadfileflag()));
 
-    connect(&thUsbMonitor, SIGNAL(signalupdateTextUi(QString)), this, SLOT(slotupdateTextUi(QString)));
     connect(&thCoolflyMonitor, SIGNAL(signalupdateTextUi(QString)), this, SLOT(slotupdateTextUi(QString)));
     connect(&thThreadCMDParse, SIGNAL(signalupdateTextUi(QString)), this, SLOT(slotupdateTextUi(QString)));
     connect(&thThreadFlyDebug, SIGNAL(signalupdateTextUi(QString)), this, SLOT(slotupdateTextUi(QString)));
@@ -146,15 +141,18 @@ QCoolDownlaod::QCoolDownlaod(QWidget* parent)
     qRegisterMetaType<State_LED>("State_LED");
     connect(&thCoolflyMonitor, SIGNAL(signalupdateStateLED(State_LED)), this, SLOT(slotsetbt_connect_color(State_LED)));
 
+    connect(&thCoolflyMonitor, SIGNAL(signalreboot()), this, SLOT(slotcmd_reboot()));
 
     connect(ui.sel_get_verison, SIGNAL(clicked()), this, SLOT(slotcmd_get_version()));
     connect(ui.bt_get_setting, SIGNAL(clicked()), this, SLOT(slotcmd_get_setting()));
     connect(ui.bt_save_setting, SIGNAL(clicked()), this, SLOT(slotcmd_save_setting()));
     connect(ui.bt_cf_protocol, SIGNAL(clicked()), this, SLOT(slotcmd_start_cf_protocol()));
+    connect(ui.bt_usb_update, SIGNAL(clicked()), this, SLOT(slotcmd_usb_update()));
 
     connect(ui.bt_flydebugstart, SIGNAL(clicked()), this, SLOT(slotflydebug_start()));
     connect(ui.bt_flydebugstop, SIGNAL(clicked()), this, SLOT(slotflydebug_stop()));
     connect(ui.bt_reboot, SIGNAL(clicked()), this, SLOT(slotcmd_reboot()));
+    connect(ui.bt_reboot_sky, SIGNAL(clicked()), this, SLOT(slotcmd_systemstate_rboot()));
     connect(ui.bt_get_chip_id, SIGNAL(clicked()), this, SLOT(slotcmd_get_chipid()));
     connect(ui.bt_num_plus, SIGNAL(clicked()), this, SLOT(slotnum_plus()));
     connect(ui.bt_num_mi, SIGNAL(clicked()), this, SLOT(slotnum_minus()));
@@ -171,6 +169,8 @@ QCoolDownlaod::QCoolDownlaod(QWidget* parent)
     connect(&thThreadCMDParse, SIGNAL(signalupdateChipID()), this, SLOT(slotupdateChipID()));
 
     ui.comboBox_year->setCurrentIndex(3);
+
+    thCoolflyMonitor.update_app_flag = false;
 }
 
 
@@ -965,4 +965,70 @@ void QCoolDownlaod::slotcmd_mag_cali(void)
         delete giveup;
     }
 }
+
+
+void QCoolDownlaod::slotcmd_systemstate_rboot(void)
+{
+    CMDBuffPackage* cmd = new CMDBuffPackage;
+    CMDBuffPackage* giveup = NULL;
+    STRU_WIRELESS_MSG_HEADER CMD_TX;
+
+    uint8_t cf_payload[1];
+    cf_payload[0] = MSGID_REBOOT;
+
+    packToSend(CF_PRO_MSGID_SYSTEM, cf_payload, 1, &cmd->data[10]);
+
+    CMD_TX.chk_sum = 0;
+    for (int i = 0; i < 7; i++)
+    {
+        CMD_TX.chk_sum += cmd->data[10 + i];
+    }
+
+    CMD_TX.magic_header = 0x5AFF;
+    CMD_TX.msg_id = CMD_CF_PROTOCOL_TX;
+    CMD_TX.packet_num = 1;
+    CMD_TX.packet_cur = 0;
+    CMD_TX.msg_len = 7;
+    cmd->length = 17;
+
+    memcpy(cmd->data, &CMD_TX, sizeof(CMD_TX));
+
+    if (0 == gListTXCMD.push(cmd, giveup, 100))
+    {
+        ui.textBrowser->append("TXCMD LIST is Full,Give Up the oldest package");
+        delete giveup;
+    }
+}
+
+
+void QCoolDownlaod::slotcmd_usb_update(void)
+{
+    int32_t fsize;
+    QString pri;
+    //upgrade send data
+
+    if (fileNames == NULL)
+    {
+        pri.sprintf("please select the app.bin file !!!!");
+        ui.textBrowser->append(pri);
+        return;
+    }
+
+    
+    fsize = Get_File_Size(&fileNames);
+    pri.sprintf("get file size: %d K", fsize/1024);
+    ui.textBrowser->append(pri);
+
+    if (fsize > 0x300000)   
+    {
+        pri.sprintf(" file is to big,not the app.bin");
+        ui.textBrowser->append(pri);
+        return;
+    }
+
+    thCoolflyMonitor.file = fileNames;
+    thCoolflyMonitor.update_app_flag = true;
+    
+}
+
 

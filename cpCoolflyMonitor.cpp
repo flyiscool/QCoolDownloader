@@ -12,6 +12,7 @@
 #include "libusb.h"
 #include "cpThreadSafeQueue.h"
 #include "cpCoolflyMonitor.h"
+#include "cpUpdataApp.h"
 
 #define VID_COOLFLY		0xAAAA
 
@@ -34,7 +35,7 @@ QString temp;
 
 
 
-
+extern bool update_app_flag = false;
 
 void CPThreadCoolflyMonitor::threadCPCoolflyMonitor_main(CPThreadCoolflyMonitor* pCPThreadCoolflyMonitor)
 {
@@ -112,10 +113,11 @@ void CPThreadCoolflyMonitor::threadCPCoolflyMonitor_main(CPThreadCoolflyMonitor*
 					continue;
 				}
 				emit pCPthThis->signalupdateStateLED(normal);
+				emit signalupdateTextUi("GET USB DEVICE SUCCESS");
 			}
 		}
 
-		if (pCPthThis->devGround != NULL)
+		if (pCPthThis->devGround != NULL)		// process txcmd
 		{
 			if (gListTXCMD.size() > 0)
 			{
@@ -157,7 +159,10 @@ void CPThreadCoolflyMonitor::threadCPCoolflyMonitor_main(CPThreadCoolflyMonitor*
 			}
 		}
 
-		if (pCPthThis->devGround != NULL)
+
+
+
+		if (pCPthThis->devGround != NULL)		//	process rxcmd
 		{ 
 			transferred = 0;
 			cmdrx = new CMDBuffPackage;
@@ -193,27 +198,67 @@ void CPThreadCoolflyMonitor::threadCPCoolflyMonitor_main(CPThreadCoolflyMonitor*
 				}
 				break;
 			case LIBUSB_ERROR_PIPE:	// the endpoint halted,so  retry to open the interface.
-				emit signalupdateTextUi("TXCMD endpoint halted. LIBUSB_ERROR_PIPE");
+				emit signalupdateTextUi("RXCMD endpoint halted. LIBUSB_ERROR_PIPE");
 				pCPthThis->devGround = NULL;
 				libusb_free_device_list(pCPthThis->devsList, 1);
 				pCPthThis->msleep(500);
 				break;
 			case LIBUSB_ERROR_OVERFLOW:	 // give up the data because it's maybe lost. need fix.
-				emit signalupdateTextUi("TXCMD Buff is to small. LIBUSB_ERROR_OVERFLOW");
+				emit signalupdateTextUi("RXCMD Buff is to small. LIBUSB_ERROR_OVERFLOW");
 				break;
 
 			case LIBUSB_ERROR_NO_DEVICE: // maybe lost the device.
-				emit signalupdateTextUi("TXCMD device lost. LIBUSB_ERROR_NO_DEVICE");
+				emit signalupdateTextUi("RXCMD device lost. LIBUSB_ERROR_NO_DEVICE");
 				break;
 			case LIBUSB_ERROR_BUSY:
-				emit signalupdateTextUi("TXCMD LIBUSB_ERROR_BUSY");
+				emit signalupdateTextUi("RXCMD LIBUSB_ERROR_BUSY");
 				pCPthThis->msleep(500);
 				break;
 			default:
-				emit signalupdateTextUi("TXCMD error unknow :");
+				qDebug() << r << endl;
+				emit signalupdateTextUi("RXCMD error unknow :");
 				break;
 			}
 		}
+
+
+		if (pCPthThis->devGround != NULL)		// process update_app
+		{
+			if (update_app_flag == true)
+			{
+				r = Cmd_Upgrade_V2(pCPthThis->devGround, &file);
+				switch (r)
+				{
+				case 0:
+					break;
+
+				case LIBUSB_ERROR_TIMEOUT:	// timeout also need to check the transferred;
+					break;
+				case LIBUSB_ERROR_PIPE:	// the endpoint halted,so  retry to open the interface.
+					emit signalupdateTextUi("UPDATE_APP endpoint halted. LIBUSB_ERROR_PIPE");
+					pCPthThis->devGround = NULL;
+					libusb_free_device_list(pCPthThis->devsList, 1);
+					pCPthThis->msleep(500);
+					break;
+				case LIBUSB_ERROR_OVERFLOW:	 // give up the data because it's maybe lost. need fix.
+					emit signalupdateTextUi("UPDATE_APP is to small. LIBUSB_ERROR_OVERFLOW");
+					break;
+
+				case LIBUSB_ERROR_NO_DEVICE: // maybe lost the device.
+					emit signalupdateTextUi("UPDATE_APP device lost. LIBUSB_ERROR_NO_DEVICE");
+					break;
+				case LIBUSB_ERROR_BUSY:
+					emit signalupdateTextUi("UPDATE_APP LIBUSB_ERROR_BUSY");
+					pCPthThis->msleep(500);
+					break;
+				default:
+					emit signalupdateTextUi("UPDATE_APP error unknow :");
+					break;
+				}
+			}
+		}
+
+
 	}
 
 

@@ -22,7 +22,7 @@ public:
     QCoolDownlaod(QWidget *parent = Q_NULLPTR);
     ~QCoolDownlaod(void);
     
-    QString g_fileNames;
+    QString fileNames;
 
 public slots:
     void slotselfile(void);
@@ -40,8 +40,11 @@ public slots:
     void slotcmd_video_stop(void);
     void slotcmd_imu_cali(void);
     void slotcmd_mag_cali(void);
+    void slotcmd_systemstate_rboot(void);
 
     void slotcmd_reboot(void);
+    void slotcmd_usb_update(void);
+
     void slotflydebug_start(void);
     void slotflydebug_stop(void);
     void slotupdate_factroy_setting(void);
@@ -54,7 +57,6 @@ public slots:
     void slot_clear_log(void);
 private:
     Ui::QCoolDownlaodClass ui;
-    CPThreadUsbMonitor		thUsbMonitor;
     CPThreadCoolflyMonitor	thCoolflyMonitor;
     CPThreadCMDParse	thThreadCMDParse;
     CPThreadFlyDebug	thThreadFlyDebug;

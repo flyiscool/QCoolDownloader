@@ -138,7 +138,7 @@ void CPThreadCMDParse::CMDParse_main()
 					if ((msg_rx_head.packet_cur * 502 + msg_rx_head.msg_len) == sizeof(STRU_FACTORY_SETTING))
 					{
 						memcpy(&cf_factroy_setting, buff, sizeof(STRU_FACTORY_SETTING));
-						qDebug() << sizeof(STRU_FACTORY_SETTING) << endl;
+						
 						emit signalupdateFactorySetting();
 						emit signalupdateTextUi("STRU_FACTORY_SETTING GET SUCCESS");
 						
@@ -160,7 +160,9 @@ void CPThreadCMDParse::CMDParse_main()
 			case 0x000A: // reboot
 				if (cmdrx->data[10] == 0x01)
 				{
-					emit signalupdateTextUi("REBOOT SUCCESS");
+					emit signalupdateTextUi("REBOOT SUCCESS  goodbye!");
+					emit signalupdateTextUi("----------------------------------------");
+					
 				}
 				else
 				{
@@ -188,19 +190,11 @@ void CPThreadCMDParse::CMDParse_main()
 
 			case 0x0093: // cf_protocol read info
 				qDebug() << cmdrx->length << endl;
-				break;
-				
+				break;				
 }
-
-
 		delete cmdrx;
 	}
-
-
 }
-
-
-
 
 bool cf_checksum(CMDBuffPackage* cmdrx)
 {
