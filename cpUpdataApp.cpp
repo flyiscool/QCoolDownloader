@@ -60,9 +60,6 @@ int Get_File_Size(QString* filename)
 
 
 
-
-
-
 int CPThreadCoolflyMonitor::CMD_UPGRADE_LOCAL_APP(libusb_device_handle* dev, QString* upgrade_file)
 {
     int i, j;
@@ -149,6 +146,7 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_LOCAL_APP(libusb_device_handle* dev, QSt
             buffer[9] = (char)(sum >> 8);
         }
 
+
         ret = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_OUT, buffer, length + 10, &transferred, 1000);
 
         if (nCurrentFrame < (totalframe - 1))
@@ -171,6 +169,8 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_LOCAL_APP(libusb_device_handle* dev, QSt
 
             if (transferred > 0)
             {
+
+                
                 //pkg okg
                 if (pkg_ret[0] == 0xff && pkg_ret[1] == 0x5a
                     && pkg_ret[2] == 0x01 && pkg_ret[3] == 0x00 && pkg_ret[10] == 0x01)
@@ -211,6 +211,15 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_LOCAL_APP(libusb_device_handle* dev, QSt
                         break;
                     }
                 }
+                else if (pkg_ret[0] == 0xff && pkg_ret[1] == 0x5a
+                    && pkg_ret[2] == 0x01 && pkg_ret[3] == 0x00 && pkg_ret[10] == 5) // end
+                {
+                    emit signalupdateTextUi("upgrade successed");
+
+                    update_remote_app_flag = false;
+                    emit signalreboot();
+                }
+                //pkg
                 //pkg no ack
                 else
                     continue;
@@ -245,7 +254,8 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_LOCAL_APP(libusb_device_handle* dev, QSt
     return 0;
 }
 
-
+unsigned char retry_buffer[4096][512];
+unsigned char retry_length[4096];
 
 
 int CPThreadCoolflyMonitor::CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QString* upgrade_file)
@@ -294,6 +304,10 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QS
         return 0;
     }
 
+    
+    uint16_t  lost_num = 0;
+    uint16_t lost_length = 0;
+
     while (m_isCanRun)
     {
         if (need_retry == 0)
@@ -318,7 +332,7 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QS
             buffer[6] = (char)length;
             buffer[7] = (char)(length >> 8);
 
-            buffer[10] = 0x01;  // remote app
+            buffer[10] = 01;    // remote app
             buffer[11] = 0;
             buffer[12] = (char)nCurrentFrame;
             buffer[13] = (char)(nCurrentFrame >> 8);
@@ -333,6 +347,14 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QS
             buffer[8] = (char)sum;
             buffer[9] = (char)(sum >> 8);
         }
+
+
+        for (i = 0; i < 512; i++)
+        {
+            retry_buffer[nCurrentFrame][i] = buffer[i];
+        }
+
+        retry_length[nCurrentFrame] = length + 10;
 
         ret = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_OUT, buffer, length + 10, &transferred, 1000);
 
@@ -357,6 +379,7 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QS
 
             if (transferred > 0)
             {
+                qDebug() << "pkg_ret[10] "<< pkg_ret[10] << endl;
                 //pkg okg
                 if (pkg_ret[0] == 0xff && pkg_ret[1] == 0x5a
                     && pkg_ret[2] == 0x01 && pkg_ret[3] == 0x00 && pkg_ret[10] == 0x01)
@@ -397,6 +420,24 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QS
                         break;
                     }
                 }
+                else if (pkg_ret[0] == 0xff && pkg_ret[1] == 0x5a
+                    && pkg_ret[2] == 0x01 && pkg_ret[3] == 0x00 && pkg_ret[10] == 0x02) // lost data
+                {
+                    lost_length = (pkg_ret[13] << 8 | pkg_ret[12]);
+                    lost_num = (pkg_ret[15] << 8 | pkg_ret[14]);
+
+                    ret = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_OUT, retry_buffer[lost_num], retry_length[lost_num], &transferred, 1000);
+
+                    goto retry_send;
+                }
+                else if (pkg_ret[0] == 0xff && pkg_ret[1] == 0x5a
+                    && pkg_ret[2] == 0x01 && pkg_ret[3] == 0x00 && pkg_ret[10] == 5) // end
+                {
+                    emit signalupdateTextUi("upgrade successed");
+
+                    update_remote_app_flag = false;
+                    emit signalreboot();
+                }
                 //pkg no ack
                 else
                     continue;
@@ -412,7 +453,7 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QS
                 emit signalupdateTextUi("========================================================");
                 emit signalupdateTextUi("upgrade failed ,Please restart the module and update it");
                 emit signalupdateTextUi("========================================================");
-                update_app_flag = false;
+                update_remote_app_flag = false;
                 return 0;
             }
         }
@@ -425,9 +466,95 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QS
             temp2.sprintf("progress : %d / %d", nCurrentFrame, totalframe);
             emit signalupdateTextUi(temp2);
         }
+
     }
 
     return 0;
-}
 
+
+
+retry_send:
+
+    while(m_isCanRun)
+    {
+        wait_time = 2000;
+        
+        for (j = 0; j < wait_time; j++)
+        {
+            Sleep(40);
+            r = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_IN, pkg_ret, 512, &transferred, 100);
+
+            if (transferred > 0)
+            {
+                qDebug() << "pkg_ret2[10] " << pkg_ret[10] << endl;
+                //pkg okg
+                if (pkg_ret[0] == 0xff && pkg_ret[1] == 0x5a
+                    && pkg_ret[2] == 0x01 && pkg_ret[3] == 0x00 && pkg_ret[10] == 0x01)
+                {
+                    break;
+                }
+                //pkg failed
+                else if (pkg_ret[0] == 0xff && pkg_ret[1] == 0x5a
+                    && pkg_ret[2] == 0x01 && pkg_ret[3] == 0x00 && pkg_ret[10] == 0x00)
+                {
+                    //last pkg failed
+                    if (wait_time == 2000)
+                    {
+                        emit signalupdateTextUi("========================================================");
+                        emit signalupdateTextUi("upgrade failed ,Please restart the module and update it");
+                        emit signalupdateTextUi("========================================================");
+
+                        return 0;
+                    }
+                    //common pkg failed
+                    else
+                    {
+                        j = wait_time;
+                        break;
+                    }
+                }
+                else if (pkg_ret[0] == 0xff && pkg_ret[1] == 0x5a
+                    && pkg_ret[2] == 0x01 && pkg_ret[3] == 0x00 && pkg_ret[10] == 0x02) // lost data
+                {
+                    lost_length = (pkg_ret[13] << 8 | pkg_ret[12]);
+                    lost_num = (pkg_ret[15] << 8 | pkg_ret[14]) ;
+
+                    qDebug() << "lost_length" << lost_length <<endl;
+
+                    for (int n = 0; n < lost_length; n++)
+                    {
+                        qDebug() << "lost_length" << lost_length << " = "<< (pkg_ret[15+2*n] << 8 | pkg_ret[14+2*n]) << endl;
+                    }
+                    for (int n = 0; n < 10; n++)
+                    {
+                        qDebug() << "retry_buffer" << n << " = " << retry_buffer[lost_num][n] << endl;
+                    }
+
+                    ret = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_OUT, retry_buffer[lost_num], retry_length[lost_num], &transferred, 1000);
+                }
+                else if (pkg_ret[0] == 0xff && pkg_ret[1] == 0x5a
+                    && pkg_ret[2] == 0x01 && pkg_ret[3] == 0x00 && pkg_ret[10] == 5) // end
+                {
+                    emit signalupdateTextUi("upgrade successed");
+
+                    update_remote_app_flag = false;
+                    emit signalreboot();
+
+                    return 0;
+                }
+                //pkg no ack
+                else
+                    continue;
+            }
+        }
+
+        QString temp2;
+        temp2.sprintf("resend lost pkg : %d / %d", lost_num, lost_length);
+        emit signalupdateTextUi(temp2);
+
+    }
+
+
+
+}
 

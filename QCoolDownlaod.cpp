@@ -156,6 +156,8 @@ QCoolDownlaod::QCoolDownlaod(QWidget* parent)
     ui.comboBox_year->setCurrentIndex(3);
 
     thCoolflyMonitor.update_app_flag = false;
+
+    ui.textBrowser->append("VERSION: V2.4  2021-02-06");
 }
 
 
