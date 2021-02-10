@@ -34,6 +34,7 @@ public slots:
     void slotcmd_save_setting(void);
     void slotcmd_get_chipid(void);
     void slotcmd_start_cf_protocol(void);
+    void slotcmd_stop_cf_protocol(void);
     void slotcmd_take_pic(void);
     void slotcmd_video_start(void);
     void slotcmd_video_stop(void);
@@ -47,6 +48,10 @@ public slots:
 
     void slotflydebug_start(void);
     void slotflydebug_stop(void);
+    void slotupdateFlyStateData(void);
+    void slotupdateFlyState(void);
+
+
     void slotupdate_factroy_setting(void);
     void slotchanged_factroy_setting(QTreeWidgetItem* item, int column);
     void slotupdateChipID(void);

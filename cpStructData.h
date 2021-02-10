@@ -508,6 +508,120 @@ typedef  struct {
 
 
 
+typedef struct {
+    int8_t       ATTPicth;       /* 俯仰角度 单位: 度 */
+    int8_t       ATTRoll;        /* 横滚角度 单位: 度 */
+    uint8_t      FlySpeed;       /* 水平速度 单位: 0.1m/s */
+    uint8_t      Voltage;        /* 电压 单位: 0.1v */
+    uint8_t      InGas;          /* 无需关心的数据  */
+    int8_t       VSpeed;         /* 垂直速度 单位: 0.1m/s */
+    uint8_t      VDOP;           /* GPS的精度 范围: 0-250, 小于150为优秀,大于150为不好 */
+    union {
+        uint8_t SysState;
+        struct {
+            uint8_t rxRssi : 4;  /* 接收机信号强度 范围 : 0-10 */
+            uint8_t GpsNum : 4;  /* 飞行器的GPS卫星数量       */
+        };
+    } SysState2;
+
+    union {
+        uint16_t SysState;
+        struct {
+            uint8_t FlyMode : 4;  /* 0:手动,1:姿态,2:高度,3:GPS,4:巡航,5:AOC无头,6:环绕,7:RTH返航 */
+            uint8_t IsMotoUnlock : 1;  /* 马达是否启动 */
+            uint8_t IsImuCalReq : 1;  /* 陀螺仪 校准请求            */
+            uint8_t IsMagCalReq : 1;  /* 指南针校准请求        */
+            uint8_t IsLowVoltage : 1;  /* 低电压报警                      */
+            uint8_t MagCalState : 2;  /* 指南针校准方向 1:水平校准 , 2:垂直校准        */
+            uint8_t RcIsFailed : 1;  /* 遥控信号丢失          */
+            uint8_t IsAhrsRst : 1;  /* AHRS 正在初始化              */
+            uint8_t IsAltFailed : 1;  /* 飞行器高度失控                */
+            uint8_t navState : 2;  /* 导航状态 3:跟随 2:没有导航数据 1:暂停 0:航点飞行中 */
+            uint8_t IsAccCalReq : 1;  /* 水平校准请求 */
+        };
+    } SysState1;
+
+    int16_t      Altitude;       /* 高度 单位: 0.1m    	                */
+    int16_t      GpsHead;        /* GPS飞行方向单位 度     		          */
+    int16_t      ATTYaw;         /* 航向角 单位: 度    	                */
+    uint16_t     HomeDistance;   /* 飞行距离单位: 米                     */
+    int16_t      HomeHead;       /* 回航角度 单位:度,范围+-180           */
+    uint16_t     FlyTime_Sec;    /* 飞行时间 单位: 秒                    */
+    uint8_t      VoltageHigh;    /* 飞行器电压的高8位                    */
+    uint8_t      reserve2;       /*                                      */
+    int32_t      Lon, Lat;       /* 飞行器的经纬度 the lag\lng           */
+    //2020.06.12
+    union {
+        uint16_t SysState;
+        struct {
+            uint8_t GyroFailed : 1;   /*  陀螺仪错误     */
+            uint8_t BarometerFailed : 1;   /*  气压计错误     */
+            uint8_t MagFailed : 1;   /*  地磁错误       */
+            uint8_t OptFlowFailed : 1;   /*  光流错误       */
+            uint8_t GpsFailed : 1;   /*  GPS错误        */
+            uint8_t isLanding : 1;   /*  正在降落       */
+            uint8_t isUping : 1;   /*  正在上升       */
+            uint8_t isReturn : 1;   /*  返航中         */
+            uint8_t isCircleFly : 1;   /*  环绕中         */
+            uint8_t IsLowVtg2 : 1;   /* 二级低电压报警   */
+            //2020.08.28
+            uint8_t Tip_NOGPS : 1;   /* 提示无GPS  */
+        };
+    } SysState3;
+    uint8_t reserve3;            /*                                      */
+    uint8_t reserve4;            /*                                      */
+    /*-------------------------------------------------------------------*/
+} tFlyStateData_V2;
+
+
+typedef struct {
+    float ATTPicth;       /* 俯仰角度 单位: 度 */
+    float ATTRoll;        /* 横滚角度 单位: 度 */
+    float ATTYaw;         /* 航向角 单位: 度    	                */
+    float FlySpeed;       /* 水平速度 单位: 0.1m/s */
+    float VSpeed;         /* 垂直速度 单位: 0.1m/s */
+    float Voltage;        /* 电压 单位: 0.1v */
+    float VDOP;           /* GPS的精度 范围: 0-250, 小于150为优秀,大于150为不好 */
+    float Altitude;       /* 高度 单位: 0.1m    	                */
+    float GpsHead;        /* GPS飞行方向单位 度     		          */
+    float HomeDistance;   /* 飞行距离单位: 米                     */
+    float HomeHead;       /* 回航角度 单位:度,范围+-180           */
+    float FlyTime_Sec;    /* 飞行时间 单位: 秒                    */
+    float Lon;       	  /* 飞行器的经纬度 the lag\lng           */
+    float Lat;       	  /* 飞行器的经纬度 the lag\lng           */
+    uint32_t rxRssi;	  /* 接收机信号强度 范围 : 0-10 */
+    uint32_t GpsNum;	  /* 飞行器的GPS卫星数量       */
+    uint32_t FlyMode;     /* 0:手动,1:姿态,2:高度,3:GPS,4:巡航,5:AOC无头,6:环绕,7:RTH返航 */
+    union {
+        uint32_t SysFlag;
+        struct {
+            uint8_t IsMotoUnlock : 1;  /* 马达是否启动 */
+            uint8_t IsImuCalReq : 1;  /* 陀螺仪 校准请求            */
+            uint8_t IsMagCalReq : 1;  /* 指南针校准请求        */
+            uint8_t IsLowVoltage : 1;  /* 低电压报警                      */
+            uint8_t MagCalState : 2;  /* 指南针校准方向 1:水平校准 , 2:垂直校准        */
+            uint8_t RcIsFailed : 1;  /* 遥控信号丢失          */
+            uint8_t IsAhrsRst : 1;  /* AHRS 正在初始化              */
+            uint8_t IsAltFailed : 1;  /* 飞行器高度失控                */
+            uint8_t navState : 2;  /* 导航状态 3:跟随 2:没有导航数据 1:暂停 0:航点飞行中 */
+            uint8_t IsAccCalReq : 1;  /* 水平校准请求 */
+            uint8_t GyroFailed : 1;   /*  陀螺仪错误     */
+            uint8_t BarometerFailed : 1;   /*  气压计错误     */
+            uint8_t MagFailed : 1;   /*  地磁错误       */
+            uint8_t OptFlowFailed : 1;   /*  光流错误       */
+            uint8_t GpsFailed : 1;   /*  GPS错误        */
+            uint8_t isLanding : 1;   /*  正在降落       */
+            uint8_t isUping : 1;   /*  正在上升       */
+            uint8_t isReturn : 1;   /*  返航中         */
+            uint8_t isCircleFly : 1;   /*  环绕中         */
+            uint8_t IsLowVtg2 : 1;   /*  二级低电压报警  	*/
+            uint8_t Tip_NOGPS : 1;   /*  提示无GPS  	  	*/
+        };
+    } SysFlag_u;
+
+} cf_fly_state_s;
+
+
 
 #define  CMD_DEVICE_INFO    0x0019
 #define  CMD_CF_PROTOCOL_TX 0x0094
@@ -529,5 +643,6 @@ typedef  struct {
 #define     MSGID_CAMERA_RECORD_STOP    0x00
 
 
+#define CF_PRO_MSGID_FLYSTATEDATA   0x1D
 
-
+#define CF_PRO_MSGID_FLYSTATE       0x1E    // new

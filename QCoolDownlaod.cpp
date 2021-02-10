@@ -16,6 +16,8 @@ extern threadsafe_queue<CMDBuffPackage*> gListRXCMD;
 extern STRU_FACTORY_SETTING cf_factroy_setting;
 extern STRU_DEVICE_INFO cf_device_info;
 
+tFlyStateData_V2 g_flystatedata_rx;
+cf_fly_state_s g_fly_state;
 //#define RELEASE_VERISON        1
 
 QString int8_t2Str(uint8_t* data, int len, int filedwidth, int base);
@@ -121,6 +123,9 @@ QCoolDownlaod::QCoolDownlaod(QWidget* parent)
     connect(&thThreadFlyDebug, SIGNAL(signalupdateTextUi(QString)), this, SLOT(slotupdateTextUi(QString)));
     connect(&thThreadFlyDebugParse, SIGNAL(signalupdateTextUi(QString)), this, SLOT(slotupdateTextUi(QString)));
 
+    connect(&thThreadCMDParse, SIGNAL(signalupdateFlyStateData()), this, SLOT(slotupdateFlyStateData()));
+    connect(&thThreadCMDParse, SIGNAL(signalupdateFlyState()), this, SLOT(slotupdateFlyState()));
+
     qRegisterMetaType<State_LED>("State_LED");
     connect(&thCoolflyMonitor, SIGNAL(signalupdateStateLED(State_LED)), this, SLOT(slotsetbt_connect_color(State_LED)));
 
@@ -131,6 +136,7 @@ QCoolDownlaod::QCoolDownlaod(QWidget* parent)
     connect(ui.bt_get_setting, SIGNAL(clicked()), this, SLOT(slotcmd_get_setting()));
     connect(ui.bt_save_setting, SIGNAL(clicked()), this, SLOT(slotcmd_save_setting()));
     connect(ui.bt_cf_protocol, SIGNAL(clicked()), this, SLOT(slotcmd_start_cf_protocol()));
+    connect(ui.bt_cf_protocol_stop, SIGNAL(clicked()), this, SLOT(slotcmd_stop_cf_protocol()));
     connect(ui.bt_usb_update, SIGNAL(clicked()), this, SLOT(slotcmd_usb_update()));
     connect(ui.bt_usb_update_sky, SIGNAL(clicked()), this, SLOT(slotcmd_usb_remote_update()));
 
@@ -741,6 +747,33 @@ void QCoolDownlaod::slotcmd_start_cf_protocol(void)
 }
 
 
+
+void QCoolDownlaod::slotcmd_stop_cf_protocol(void)
+{
+    CMDBuffPackage* cmd = new CMDBuffPackage;
+    CMDBuffPackage* giveup = NULL;
+    STRU_WIRELESS_MSG_HEADER CMD_TX;
+
+    CMD_TX.magic_header = 0x5AFF;
+    CMD_TX.msg_id = 0x0093;
+    CMD_TX.packet_num = 1;
+    CMD_TX.packet_cur = 0;
+    CMD_TX.msg_len = 1;
+    CMD_TX.chk_sum = 0x90;
+    cmd->length = 11;
+
+    memcpy(cmd->data, &CMD_TX, sizeof(CMD_TX));
+
+    cmd->data[10] = 0x90;
+
+    if (0 == gListTXCMD.push(cmd, giveup, 100))
+    {
+        ui.textBrowser->append("TXCMD LIST is Full,Give Up the oldest package");
+        delete giveup;
+    }
+}
+
+
 /* 打包发送 */
 void packToSend(uint8_t Cmd, uint8_t* p_data, uint32_t Length, uint8_t* p_buff) {
 
@@ -1048,3 +1081,27 @@ void QCoolDownlaod::slotcmd_usb_remote_update(void)
 }
 
 
+void QCoolDownlaod::slotupdateFlyStateData(void)
+{
+    QString pri;
+ 
+    pri.sprintf("%d", g_flystatedata_rx.ATTPicth);
+    ui.label_ATTpitch_value->setText(pri);
+}
+
+
+void QCoolDownlaod::slotupdateFlyState(void)
+{
+    QString pri;
+
+    pri.sprintf("%0.2f", g_fly_state.ATTPicth);
+    ui.label_ATTpitch_value->setText(pri);
+
+    pri.sprintf("%0.2f", g_fly_state.ATTRoll);
+    ui.label_ATTroll_value->setText(pri);
+
+    pri.sprintf("%0.2f", g_fly_state.ATTYaw);
+    ui.label_ATTYaw_value->setText(pri);
+
+
+}

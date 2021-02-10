@@ -166,7 +166,7 @@ void CPThreadCoolflyMonitor::threadCPCoolflyMonitor_main(CPThreadCoolflyMonitor*
 		{ 
 			transferred = 0;
 			cmdrx = new CMDBuffPackage;
-			r = libusb_interrupt_transfer(pCPthThis->devGround, ENDPOINT_CMD_IN, cmdrx->data, 512, &transferred, 200);
+			r = libusb_interrupt_transfer(pCPthThis->devGround, ENDPOINT_CMD_IN, cmdrx->data, 512, &transferred, 1000);
 			switch (r)
 			{
 			case 0:

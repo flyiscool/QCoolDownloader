@@ -190,6 +190,7 @@ void CPThreadCMDParse::CMDParse_main()
 
 			case 0x0093: // cf_protocol read info
 				qDebug() << cmdrx->length << endl;
+				parse_cmd((char *)&cmdrx->data[10], msg_rx_head.msg_len);
 				break;				
 }
 		delete cmdrx;
@@ -217,4 +218,56 @@ bool cf_checksum(CMDBuffPackage* cmdrx)
 	}
 
 	
+}
+
+
+
+void CPThreadCMDParse::parse_cmd(char* buff, uint32_t length)
+{
+	//for (int i = 0; i < length; i++)
+	//{
+	//	qDebug("%d = 0x%02x \r\n", i, (uint8_t)buff[i]);
+	//}
+
+	//qDebug("0x%02x \r\n",(uint8_t)buff[0]);
+	if ((uint8_t)buff[0] != 0xA5)
+	{
+		return;
+	}
+
+	uint8_t len = (uint8_t)buff[3];
+
+	qDebug("len = 0x%02x \r\n", len);
+	qDebug("msgid = 0x%02x \r\n", buff[2]);
+
+
+	switch ((uint8_t)buff[2]) {
+	case CF_PRO_MSGID_FLYSTATEDATA: 
+		parse_cmd_msgid_FlyStateData_V2(&buff[4], len);
+		break;
+
+	case CF_PRO_MSGID_FLYSTATE:
+		parse_cmd_msgid_flystate(&buff[4], len);
+		break;
+
+	default:
+		emit signalupdateTextUi(" new , CMD  TO PARSE");
+		break;
+	}
+}
+
+
+extern tFlyStateData_V2 g_flystatedata_rx;
+void CPThreadCMDParse::parse_cmd_msgid_FlyStateData_V2(char* buff, uint8_t length)
+{
+	memcpy(&g_flystatedata_rx, buff, length);
+	emit signalupdateFlyStateData();
+}
+
+
+extern cf_fly_state_s g_fly_state;
+void CPThreadCMDParse::parse_cmd_msgid_flystate(char* buff, uint8_t length)
+{
+	memcpy(&g_fly_state, buff, length);
+	emit signalupdateFlyState();
 }

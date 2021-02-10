@@ -169,8 +169,6 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_LOCAL_APP(libusb_device_handle* dev, QSt
 
             if (transferred > 0)
             {
-
-                
                 //pkg okg
                 if (pkg_ret[0] == 0xff && pkg_ret[1] == 0x5a
                     && pkg_ret[2] == 0x01 && pkg_ret[3] == 0x00 && pkg_ret[10] == 0x01)
@@ -254,8 +252,8 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_LOCAL_APP(libusb_device_handle* dev, QSt
     return 0;
 }
 
-unsigned char retry_buffer[4096][512];
-unsigned char retry_length[4096];
+uint8_t retry_buffer[4096][512];
+uint16_t retry_length[4096];
 
 
 int CPThreadCoolflyMonitor::CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QString* upgrade_file)
@@ -270,7 +268,7 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QS
     unsigned char pkg_ret[512];
     int totalframe;
     int nCurrentFrame = 0;
-    int length;
+    uint16_t length;
     unsigned int sum;
     int wait_time;
     int need_retry = 0;
@@ -278,6 +276,8 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QS
     unsigned char tbuff[512];
     int transferred = 1;
     int r;
+
+    
 
     do {
         r = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_IN, tbuff, 512, &transferred, 1000);
@@ -312,6 +312,7 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QS
     {
         if (need_retry == 0)
         {
+            memset(buffer, 0, 512);
             length = fread(buffer + 16, 1, 496, fd);
 
             if (length <= 0)
@@ -348,15 +349,16 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QS
             buffer[9] = (char)(sum >> 8);
         }
 
+        memset(retry_buffer[i], 0, 512);
 
         for (i = 0; i < 512; i++)
         {
             retry_buffer[nCurrentFrame][i] = buffer[i];
         }
-
+        
         retry_length[nCurrentFrame] = length + 10;
 
-        ret = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_OUT, buffer, length + 10, &transferred, 1000);
+        ret = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_OUT, retry_buffer[nCurrentFrame], retry_length[nCurrentFrame], &transferred, 1000);
 
         if (nCurrentFrame < (totalframe - 1))
         {
@@ -426,7 +428,20 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QS
                     lost_length = (pkg_ret[13] << 8 | pkg_ret[12]);
                     lost_num = (pkg_ret[15] << 8 | pkg_ret[14]);
 
-                    ret = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_OUT, retry_buffer[lost_num], retry_length[lost_num], &transferred, 1000);
+                    for (int n = 0; n < lost_length; n++)
+                    {
+                        qDebug() << "lost_num" << lost_length << " = " << (pkg_ret[15 + 2 * n] << 8 | pkg_ret[14 + 2 * n]) << endl;
+                        lost_num = (pkg_ret[15 + 2 * n] << 8 | pkg_ret[14 + 2 * n]);
+
+                        QString temp3;
+                        temp3.sprintf("resend lost pkg : %d / %d", lost_num, lost_length);
+                        emit signalupdateTextUi(temp3);
+                        ret = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_OUT, retry_buffer[lost_num], retry_length[lost_num], &transferred, 1000);
+                        Sleep(40);
+                    }
+
+                    ret = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_OUT, retry_buffer[totalframe - 1], retry_length[totalframe - 1], &transferred, 1000);
+                    emit signalupdateTextUi("waiting for the ACK... about 10 secound ");
 
                     goto retry_send;
                 }
@@ -519,18 +534,20 @@ retry_send:
                     lost_length = (pkg_ret[13] << 8 | pkg_ret[12]);
                     lost_num = (pkg_ret[15] << 8 | pkg_ret[14]) ;
 
-                    qDebug() << "lost_length" << lost_length <<endl;
-
                     for (int n = 0; n < lost_length; n++)
                     {
-                        qDebug() << "lost_length" << lost_length << " = "<< (pkg_ret[15+2*n] << 8 | pkg_ret[14+2*n]) << endl;
-                    }
-                    for (int n = 0; n < 10; n++)
-                    {
-                        qDebug() << "retry_buffer" << n << " = " << retry_buffer[lost_num][n] << endl;
-                    }
+                        qDebug() << "lost_num" << lost_length << " = "<< (pkg_ret[15+2*n] << 8 | pkg_ret[14+2*n]) << endl;
+                        lost_num = (pkg_ret[15 + 2 * n] << 8 | pkg_ret[14 + 2 * n]);
 
-                    ret = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_OUT, retry_buffer[lost_num], retry_length[lost_num], &transferred, 1000);
+                        QString temp3;
+                        temp3.sprintf("resend lost pkg : %d / %d", lost_num, lost_length);
+                        emit signalupdateTextUi(temp3);
+                        ret = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_OUT, retry_buffer[lost_num], retry_length[lost_num], &transferred, 1000);
+                        Sleep(40);
+                    }
+         
+                    ret = libusb_interrupt_transfer(dev, ENDPOINT_CTRL_OUT, retry_buffer[totalframe - 1], retry_length[totalframe - 1], &transferred, 1000);
+                    emit signalupdateTextUi("waiting for the ACK... about 10 secound ");
                 }
                 else if (pkg_ret[0] == 0xff && pkg_ret[1] == 0x5a
                     && pkg_ret[2] == 0x01 && pkg_ret[3] == 0x00 && pkg_ret[10] == 5) // end
