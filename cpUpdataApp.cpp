@@ -264,6 +264,9 @@ int CPThreadCoolflyMonitor::CMD_UPGRADE_REMOTE_APP(libusb_device_handle* dev, QS
     FILE* fd;
     int ret;
 
+    memset(retry_buffer, 0, 4096 * 512);
+    memset(retry_length, 0, 4096);
+
     unsigned char buffer[512];
     unsigned char pkg_ret[512];
     int totalframe;

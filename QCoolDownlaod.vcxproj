@@ -58,6 +58,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)libusb-1.0.22\include\libusb-1.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(ProjectDir)libusb-1.0.22\MS64\static;$(ProjectDir)libusb-1.0.22\MS64\dll;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

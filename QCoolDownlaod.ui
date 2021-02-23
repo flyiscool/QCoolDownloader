@@ -409,7 +409,7 @@
        <string>遥控强度</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_Vspeed_4">
+     <widget class="QLabel" name="label_GpsNum">
       <property name="geometry">
        <rect>
         <x>630</x>
@@ -422,7 +422,7 @@
        <string>GPS星数</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_rxRssi_vaule">
+     <widget class="QLabel" name="label_rxRssi_value">
       <property name="geometry">
        <rect>
         <x>310</x>
@@ -435,7 +435,7 @@
        <string>0</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_Vspeed_value_4">
+     <widget class="QLabel" name="label_GpsNum_value">
       <property name="geometry">
        <rect>
         <x>690</x>
@@ -552,7 +552,7 @@
        <string>AHRS初始化</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_Vspeed_value_5">
+     <widget class="QLabel" name="label_navState_value">
       <property name="geometry">
        <rect>
         <x>440</x>
@@ -1005,6 +1005,58 @@
       </property>
       <property name="text">
        <string>stop proto</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bt_set_home">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>180</y>
+        <width>81</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>设置HOME航点</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bt_armed">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>210</y>
+        <width>81</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>飞机解锁</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bt_disarmed">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>240</y>
+        <width>81</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>飞机锁定</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bt_rc_cali">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>140</y>
+        <width>81</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>RC校准</string>
       </property>
      </widget>
     </widget>

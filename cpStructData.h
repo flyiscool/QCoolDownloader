@@ -4,6 +4,8 @@
 
 #include <QMetaType>
 
+//#pragma pack(4)//设定为4字节对齐
+
 
 #define MAX_USB_BULK_SIZE  4*1024     // 32Kbyte 
 //#define MAX_USB_BULK_SIZE  1024*1024    // 1Mbyte 
@@ -493,17 +495,173 @@ typedef struct {
 } spl0601_s;
 
 
-typedef  struct {
-    uint32_t head;
-    uint32_t cnt;
-    imu9_t imu9;
-    attitude3_t attitude3;
-    rc_ch_t rc_ch;
+typedef struct {
+    float ax;
+    float ay;
+    float az;
+    float gx;
+    float gy;
+    float gz;
+} imu6_t;
+
+typedef union {
+    struct {
+        float x;
+        float y;
+        float z;
+    };
+    float axis[3];
+} Axis3f;
+
+
+typedef struct {
+    uint64_t timestamp; 		// required for logger
+    double time_utc_usec;		// utc_usec
+    double lat;				// gps latitude
+    double lon;				// gps longitude
+    double alt;				// gps altitude
+    double alt_ellipsoid;		//	大地水准面差距
+    double gps_yaw;
+    double lat_err;
+    double lon_err;
+    double alt_err;
+    double pdop;
+    double hdop;
+    double vdop;
+    double vel_m_s;
+    double cog_rad;
+    double gps_yaw_real;
+    double gps_yaw_mag;
+    double gnd_speed_j;
+    double g_speed_kmh;
+    int32_t timestamp_time_relative;
+    uint8_t fix_type;
+    uint8_t vel_ned_valid;
+    uint8_t satellites_used;
+} gps_pos_s;
+
+typedef struct {
+    uint32_t ch[16];
+    uint64_t timestamp;
+} sky_rc_s;
+
+
+typedef struct {
+    imu6_t	imu6;
+    Axis3f 	mag;
     spl0601_s baro;
+    gps_pos_s gps_pos;
+    sky_rc_s	sky_rc;
+} sensorData_s;
+
+
+
+typedef struct {
+    float roll;
+    float pitch;
+    float yaw;
+} attitude_s;
+
+typedef struct {
+    float _00;
+    float _01;
+    float _02;
+    float _10;
+    float _11;
+    float _12;
+    float _20;
+    float _21;
+    float _22;
+} dcm_s;
+
+typedef struct {
+    float setHeading;
+    float uAltitude;
+    float u_roll;
+    float u_pitch;
+    float u_yaw;
+} ctrl_pid_s;
+
+typedef struct {
+    double lat;
+    double lon;
+    double alt;
+} gps_local_s;
+
+
+typedef struct {
+    float cm_per_deg_lat;
+    float cm_per_deg_lon;
+} gps_cal_s;
+
+
+typedef  struct {
+    double x1_hat;
+    double y1_hat;
+    float z1_hat;
+    float z2_hat;
+    float z3_hat;
+    float z1_hat2;
+    float z2_hat2;
+    float z3_acc;
+    double vx1_hat;
+    double vy1_hat;
+    float vx2_hat;
+    float vx3_hat;
+    float vy2_hat;
+    float vy3_hat;
+} kalman_output_s;
+
+typedef struct {
+    float CH_THR;
+    float CH_AIL;
+    float CH_ELE;
+    float CH_RUD;
+    float AUX_1;
+    float AUX_2;
+    float AUX_3;
+    float AUX_4;
+    uint64_t timestamp;
+} rcf_s;
+
+
+typedef  struct {
+    uint32_t magichead;
+    uint32_t cnt;
+    attitude_s ypr;
+    dcm_s dcm;
+    float heading;
+    ctrl_pid_s pidout;
+    imu6_t e_imu;
+    gps_local_s gps_home;
+    gps_cal_s gps_cal;
+    kalman_output_s kalman;
+    rcf_s rcf;
+    rcf_s rcf_cal;
+    uint32_t flymode;
     motor_t motor;
-    pid_out_t pid_out;
     uint32_t end;
-    /* data */
+} flight_t;
+
+typedef  struct {
+    uint32_t magichead;
+    uint32_t cnt;
+    float ax;
+    float ay;
+    float az;
+    float gx;
+    float gy;
+    float gz;
+    float mx;
+    float my;
+    float mz;
+    float yaw;
+    float pitch;
+    float roll;
+    float u_yaw;
+    float u_pitch;
+    float u_roll;
+    uint32_t end;
 } flight_data_t;
 
 
@@ -632,9 +790,15 @@ typedef struct {
 #define CF_PRO_MSGID_SYSTEM      0x01
 #define     MSGID_REBOOT            0x01
 
+#define CF_PRO_MSGID_CTRL           0x02
+#define     MSGID_SET_GPS_HOME          0x01
+#define     MSGID_SET_ARMED             0x02
+#define     MSGID_SET_DISARMED          0x03
+
 #define CF_PRO_MSGID_CALIBRATE   0x06
 #define     MSGID_CALIBRATE_MAG     0x02
 #define     MSGID_CALIBRATE_IMU     0x03
+#define     MSGID_CALIBRATE_RC     0x04
 
 
 #define CF_PRO_MSGID_CAMERA      0x28

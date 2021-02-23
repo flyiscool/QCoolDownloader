@@ -40,11 +40,16 @@ public slots:
     void slotcmd_video_stop(void);
     void slotcmd_imu_cali(void);
     void slotcmd_mag_cali(void);
+    void slotcmd_rc_cali(void);
     void slotcmd_systemstate_rboot(void);
 
     void slotcmd_reboot(void);
     void slotcmd_usb_update(void);
     void slotcmd_usb_remote_update(void);
+    
+    void slotcmd_set_gps_home(void);
+    void slotcmd_set_armed(void);
+    void slotcmd_set_disarmed(void);
 
     void slotflydebug_start(void);
     void slotflydebug_stop(void);

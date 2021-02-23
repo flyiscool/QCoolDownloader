@@ -230,7 +230,7 @@ void CPThreadFlyDebug::run()
 
 void CPThreadFlyDebugParse::FlyDebugParse_main(void)
 {
-#define MSG_LEN	108
+	#define MSG_LEN	72
 	DebugBuffPackage* debugrx;
 	uint16_t msg_id;
 
@@ -245,16 +245,16 @@ void CPThreadFlyDebugParse::FlyDebugParse_main(void)
 	//显示时间，格式为：年-月-日 时：分：秒 周几
 	QString StrCurrentTime = current_time.toString("yyyy_MM_dd_hh_mm_ss");
 	qDebug() << "StrCurrentTime = " << StrCurrentTime << endl;
+	qDebug() << "flight_data_t size = " << sizeof(flight_data_t) << endl;
 
 
 	QFile file(StrCurrentTime+".txt");
 	if (file.open(QIODevice::ReadWrite | QIODevice::Text)) //QIODevice::ReadWrite支持读写
 	{
 		QTextStream stream(&file);
-		stream << "ax ay az gx gy gz mx my mz baro yaw pitch roll rc_r rc_p rc_th rc_yaw rc_mod mfl mfr mbl mbr po_r po_p po_th po_ya" << endl; //"123" 为写入文本的字符-- endl表示换行-- 理解就ok；
+		stream << "cnt,ax,ay,az,gx,gy,gz,mx,my,mz,y,p,r" << endl; //"123" 为写入文本的字符-- endl表示换行-- 理解就ok；
 	
-
-
+		
 	while (m_isCanRun)
 	{
 		
@@ -323,30 +323,13 @@ void CPThreadFlyDebugParse::FlyDebugParse_main(void)
 					QString temp2;
 					temp2.sprintf("pkdid = %d", pkdid);
 					emit signalupdateTextUi(temp2);
-
-					qDebug() << flight_pkt.cnt;
-					qDebug() << flight_pkt.imu9.acc_x << flight_pkt.imu9.acc_y << flight_pkt.imu9.acc_z ;
-					qDebug() << flight_pkt.imu9.gyro_x << flight_pkt.imu9.gyro_y << flight_pkt.imu9.gyro_z;
-					qDebug() << flight_pkt.imu9.mag_x << flight_pkt.imu9.mag_y << flight_pkt.imu9.mag_z;
-					qDebug() << flight_pkt.attitude3.yaw << flight_pkt.attitude3.pitch << flight_pkt.attitude3.roll;
-					qDebug() << flight_pkt.rc_ch.roll << flight_pkt.rc_ch.pitch << flight_pkt.rc_ch.throttle << flight_pkt.rc_ch.yaw << flight_pkt.rc_ch.mode;
-					qDebug() << flight_pkt.baro.height_comp;
-					qDebug() << flight_pkt.motor.motor_back_right << flight_pkt.motor.motor_front_right << flight_pkt.motor.motor_back_left << flight_pkt.motor.motor_front_left;
-					qDebug() << flight_pkt.pid_out.roll << flight_pkt.pid_out.pitch << flight_pkt.pid_out.throttle << flight_pkt.pid_out.yaw;
-
-
 					
 				}
 				
 				stream << flight_pkt.cnt << ",";
-				stream << flight_pkt.imu9.acc_x << "," << flight_pkt.imu9.acc_y << "," << flight_pkt.imu9.acc_z << ",";
-				stream << flight_pkt.imu9.gyro_x << "," << flight_pkt.imu9.gyro_y << "," << flight_pkt.imu9.gyro_z << ",";
-				stream << flight_pkt.imu9.mag_x << "," << flight_pkt.imu9.mag_y << "," << flight_pkt.imu9.mag_z << ",";
-				stream << flight_pkt.attitude3.yaw << "," << flight_pkt.attitude3.pitch << "," << flight_pkt.attitude3.roll << ",";
-				stream << flight_pkt.rc_ch.roll << "," << flight_pkt.rc_ch.pitch << "," << flight_pkt.rc_ch.throttle << "," << flight_pkt.rc_ch.yaw << "," << flight_pkt.rc_ch.mode << ",";
-				stream << flight_pkt.baro.height_comp << ",";
-				stream << flight_pkt.motor.motor_back_right << "," << flight_pkt.motor.motor_front_right << "," << flight_pkt.motor.motor_back_left << "," << flight_pkt.motor.motor_front_left;
-				stream << flight_pkt.pid_out.roll << "," << flight_pkt.pid_out.pitch << "," << flight_pkt.pid_out.throttle << "," << flight_pkt.pid_out.yaw << endl;
+				stream << flight_pkt.gx << "," << flight_pkt.gy << "," << flight_pkt.gz << ",";
+				stream << flight_pkt.yaw << "," << flight_pkt.pitch << "," << flight_pkt.roll << ",";
+				stream << flight_pkt.u_yaw << "," << flight_pkt.u_pitch << "," << flight_pkt.u_roll << endl;
 
 				state = 0;
 				break;
