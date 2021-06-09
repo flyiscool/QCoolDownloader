@@ -237,16 +237,14 @@ void CPThreadCMDParse::parse_cmd(char* buff, uint32_t length)
 
 	uint8_t len = (uint8_t)buff[3];
 
-	qDebug("len = 0x%02x \r\n", len);
-	qDebug("msgid = 0x%02x \r\n", buff[2]);
+	qDebug("len = %d  %d\r\n", buff[1], buff[3]);
+	//qDebug("msgid = 0x%02x \r\n", buff[2]);
 
+	len -= 2;
 
 	switch ((uint8_t)buff[2]) {
-	case CF_PRO_MSGID_FLYSTATEDATA: 
-		parse_cmd_msgid_FlyStateData_V2(&buff[4], len);
-		break;
+	case MSGID_SKY2GND_FLYSTATE_V3:
 
-	case CF_PRO_MSGID_FLYSTATE:
 		parse_cmd_msgid_flystate(&buff[4], len);
 		break;
 
@@ -257,17 +255,9 @@ void CPThreadCMDParse::parse_cmd(char* buff, uint32_t length)
 }
 
 
-extern tFlyStateData_V2 g_flystatedata_rx;
-void CPThreadCMDParse::parse_cmd_msgid_FlyStateData_V2(char* buff, uint8_t length)
-{
-	memcpy(&g_flystatedata_rx, buff, length);
-	emit signalupdateFlyStateData();
-}
-
-
-extern cf_fly_state_s g_fly_state;
+extern fly_state_v3_t g_fly_state;
 void CPThreadCMDParse::parse_cmd_msgid_flystate(char* buff, uint8_t length)
 {
-	memcpy(&g_fly_state, buff, length);
+	memcpy(&g_fly_state, buff, sizeof(fly_state_v3_t));
 	emit signalupdateFlyState();
 }

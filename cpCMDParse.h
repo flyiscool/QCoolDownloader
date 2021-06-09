@@ -20,7 +20,6 @@ public:
 	virtual void run();
 	void	CMDParse_main(void);
 	void	parse_cmd(char* buff, uint32_t length);
-	void	parse_cmd_msgid_FlyStateData_V2(char* buff, uint8_t length);
 	void	parse_cmd_msgid_flystate(char* buff, uint8_t length);
 
 signals:

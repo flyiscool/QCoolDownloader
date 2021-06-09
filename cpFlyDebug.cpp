@@ -225,16 +225,40 @@ void CPThreadFlyDebug::run()
 }
 
 
-
+bool isDirExist(QString fullPath)
+{
+	QDir dir(fullPath);
+	if (dir.exists())
+	{
+		return true;
+	}
+	else
+	{
+		bool ok = dir.mkdir(fullPath);//只创建一级子目录，即必须保证上级目录存在
+		return ok;
+	}
+}
 
 
 void CPThreadFlyDebugParse::FlyDebugParse_main(void)
 {
-	#define MSG_LEN	72
-	DebugBuffPackage* debugrx;
-	uint16_t msg_id;
 
-	uint8_t buff[MSG_LEN];
+	DebugBuffPackage* debugrx; 
+	uint16_t msg_id;
+	flight_data_t g_debug;
+	
+	qDebug("---------------------------------");
+	qDebug("g_debug = %d  addr = %08x", sizeof(flight_data_t), &g_debug);
+	qDebug("magichead = %d  addr = %08x", sizeof(uint32_t), &g_debug.magichead);
+	qDebug("baro = %d  addr = %08x", sizeof(baro_t), &g_debug.baro);
+	qDebug("accel = %d  addr = %08x", sizeof(accel_t), &g_debug.accel);
+	qDebug("gyro = %d  addr = %08x", sizeof(gyro_t), &g_debug.gyro);
+	qDebug("mag = %d  addr = %08x", sizeof(mag_t), &g_debug.mag);
+	qDebug("gps = %d  addr = %08x", sizeof(gps_t), &g_debug.gps);
+	qDebug("manual0 = %d  addr = %08x", sizeof(manual_t), &g_debug.manual0);
+	qDebug("end = %d  addr = %08x", sizeof(uint32_t), &g_debug.end);
+
+	uint8_t buff[sizeof(flight_data_t)];
 	uint8_t state = 0;
 	QString temp;
 	int i;
@@ -247,25 +271,62 @@ void CPThreadFlyDebugParse::FlyDebugParse_main(void)
 	qDebug() << "StrCurrentTime = " << StrCurrentTime << endl;
 	qDebug() << "flight_data_t size = " << sizeof(flight_data_t) << endl;
 
+	ret = isDirExist(QDir::currentPath() + "/"+ StrCurrentTime);
 
-	QFile file(StrCurrentTime+".txt");
-	if (file.open(QIODevice::ReadWrite | QIODevice::Text)) //QIODevice::ReadWrite支持读写
+	qDebug() << "ret size = " << ret << QDir::currentPath() + StrCurrentTime <<  endl;
+
+	QFile file_baro("./"+ StrCurrentTime + "/baro.txt");
+	QFile file_accel("./" + StrCurrentTime + "/accel.txt");
+	QFile file_gyro("./" + StrCurrentTime + "/gyro.txt");
+	QFile file_mag("./" + StrCurrentTime + "/mag.txt");
+	QFile file_gps("./" + StrCurrentTime + "/gps.txt");
+	QFile file_manual("./" + StrCurrentTime + "/manual.txt");
+
+
+	bool ret_file = true;
+
+	ret_file = file_baro.open(QIODevice::ReadWrite | QIODevice::Text);
+	ret_file &= file_accel.open(QIODevice::ReadWrite | QIODevice::Text);
+	ret_file &= file_gyro.open(QIODevice::ReadWrite | QIODevice::Text);
+	ret_file &= file_mag.open(QIODevice::ReadWrite | QIODevice::Text);
+	ret_file &= file_gps.open(QIODevice::ReadWrite | QIODevice::Text);
+	ret_file &= file_manual.open(QIODevice::ReadWrite | QIODevice::Text);
+
+
+	if (ret_file) //QIODevice::ReadWrite支持读写
 	{
-		QTextStream stream(&file);
-		stream << "cnt,ax,ay,az,gx,gy,gz,mx,my,mz,y,p,r" << endl; //"123" 为写入文本的字符-- endl表示换行-- 理解就ok；
-	
-		
+		QTextStream stream_baro(&file_baro);
+		stream_baro << "timestamp, temperature, pressure, altitude" << endl;
+
+		QTextStream stream_accel(&file_accel);
+		stream_accel << "timestamp, temperature, x, y, z,  x_raw, y_raw, z_raw" << endl;
+
+		QTextStream stream_gyro(&file_gyro);
+		stream_gyro << "timestamp, temperature, x, y, z,  x_raw, y_raw, z_raw" << endl;
+
+		QTextStream stream_mag(&file_mag);
+		stream_mag << "timestamp, temperature, x, y, z,  x_raw, y_raw, z_raw" << endl;
+
+		QTextStream stream_gps(&file_gps);
+		stream_gps << "timestamp, timestamp_time_relative, time_utc_usec, lat, lon, alt, alt_ellipsoid, s_variance_m_s,";
+		stream_gps << "c_variance_rad, fix_type, eph, epv, hdop, vdop, noise_per_ms, jamming_indicator,";
+		stream_gps << "vel_m_s, vel_n_m_s, vel_e_m_s, vel_d_m_s, cog_rad, vel_ned_valid, satellites_used " << endl;
+
+		QTextStream stream_manual(&file_manual);
+		stream_manual << "timestamp, x, y, z, r, scroll[0], scroll[1], offset[0], offset[1]";
+		stream_manual << "button, gear, rssi, regained" << endl;
+
 	while (m_isCanRun)
 	{
 		
 		switch (state)
 		{
 			case 0:
-				memset(buff, 0, MSG_LEN);
+				memset(buff, 0, sizeof(flight_data_t));
 
 				do {
 					ret = get_n_byte(1, buff);
-					//qDebug() << "buff0"<< buff[0] << endl;
+					qDebug() << "buff0"<< buff[0] << endl;
 					if (ret == false)
 					{
 						break;
@@ -278,7 +339,7 @@ void CPThreadFlyDebugParse::FlyDebugParse_main(void)
 			case 1:
 				
 				ret = get_n_byte(1, &buff[1]);
-				//qDebug() << "buff1" << buff[1] << endl;
+				qDebug() << "buff1" << buff[1] << endl;
 				if (ret == false)
 				{
 					break;
@@ -298,12 +359,20 @@ void CPThreadFlyDebugParse::FlyDebugParse_main(void)
 				break;
 
 			case 2:
-				ret = get_n_byte(MSG_LEN - 2, &buff[2]);
+				ret = get_n_byte(sizeof(flight_data_t) - 2, &buff[2]);
+				qDebug() <<"ret = " <<ret << endl;
 				if (ret == false)
 				{
 					break;
 				}
-				if ((buff[MSG_LEN - 1] == 0xFF) && (buff[MSG_LEN - 2] == 0x5A))
+				//for (int k = 0; k < sizeof(flight_data_t); k++)
+				//{
+				//	qDebug() << " bi = "<< k <<" ==" << buff[k] << endl;
+				//}
+				//qDebug() << "sizeof(flight_data_t) = " << sizeof(flight_data_t) << endl;
+				//qDebug() << "buff[sizeof(flight_data_t) - 1] = " << buff[sizeof(flight_data_t) - 1] << endl;
+				//qDebug() << "buff[sizeof(flight_data_t) - 2] = " << buff[sizeof(flight_data_t) - 2] << endl;
+				if ((buff[sizeof(flight_data_t) - 5 ] == 0xFF) && (buff[sizeof(flight_data_t) - 6] == 0x5A))
 				{
 					state = 3;
 				}
@@ -312,13 +381,16 @@ void CPThreadFlyDebugParse::FlyDebugParse_main(void)
 					state = 0;
 				}
 				break;
-			case 3:
-				uint32_t pkdid = (buff[7] << 24) | (buff[6] << 16) | (buff[5] << 8) | buff[4];
-				//qDebug() << "get a package!!!" << endl;
-				flight_data_t flight_pkt;
-				memcpy(&flight_pkt, buff, MSG_LEN);
 
-				if (pkdid % 1000 == 0)
+			case 3:
+	
+				qDebug() << "get a package!!!" << endl;
+				static uint32_t pkdid = 0;
+				pkdid++;
+				flight_data_t flight_pkt;
+				memcpy(&flight_pkt, buff, sizeof(flight_data_t));
+
+				if ((pkdid % 1000 == 0) || pkdid == 1)
 				{
 					QString temp2;
 					temp2.sprintf("pkdid = %d", pkdid);
@@ -326,10 +398,76 @@ void CPThreadFlyDebugParse::FlyDebugParse_main(void)
 					
 				}
 				
-				stream << flight_pkt.cnt << ",";
-				stream << flight_pkt.gx << "," << flight_pkt.gy << "," << flight_pkt.gz << ",";
-				stream << flight_pkt.yaw << "," << flight_pkt.pitch << "," << flight_pkt.roll << ",";
-				stream << flight_pkt.u_yaw << "," << flight_pkt.u_pitch << "," << flight_pkt.u_roll << endl;
+				stream_baro << flight_pkt.baro.timestamp << ",";
+				stream_baro << flight_pkt.baro.temperature << ",";	// temperature in degrees celsius
+				stream_baro << flight_pkt.baro.pressure << ",";	// barometric pressure, already temp. comp.
+				stream_baro << flight_pkt.baro.altitude << endl;	 // altitude, already temp. comp.
+                       	
+
+				stream_accel << flight_pkt.accel.timestamp << ",";
+				stream_accel << flight_pkt.accel.temperature << ",";	
+				stream_accel << flight_pkt.accel.x << ",";	
+				stream_accel << flight_pkt.accel.y << ",";
+				stream_accel << flight_pkt.accel.z << ",";
+				stream_accel << flight_pkt.accel.x_raw << ",";
+				stream_accel << flight_pkt.accel.y_raw << ",";
+				stream_accel << flight_pkt.accel.z_raw << endl;
+
+				stream_gyro << flight_pkt.gyro.timestamp << ",";
+				stream_gyro << flight_pkt.gyro.temperature << ",";
+				stream_gyro << flight_pkt.gyro.x << ",";
+				stream_gyro << flight_pkt.gyro.y << ",";
+				stream_gyro << flight_pkt.gyro.z << ",";
+				stream_gyro << flight_pkt.gyro.x_raw << ",";
+				stream_gyro << flight_pkt.gyro.y_raw << ",";
+				stream_gyro << flight_pkt.gyro.z_raw << endl;
+
+				stream_mag << flight_pkt.mag.timestamp << ",";
+				stream_mag << flight_pkt.mag.temperature << ",";
+				stream_mag << flight_pkt.mag.x << ",";
+				stream_mag << flight_pkt.mag.y << ",";
+				stream_mag << flight_pkt.mag.z << ",";
+				stream_mag << flight_pkt.mag.x_raw << ",";
+				stream_mag << flight_pkt.mag.y_raw << ",";
+				stream_mag << flight_pkt.mag.z_raw << endl;
+
+				stream_gps << flight_pkt.gps.timestamp << ",";
+				stream_gps << flight_pkt.gps.timestamp_time_relative << ",";
+				stream_gps << flight_pkt.gps.time_utc_usec << ",";
+				stream_gps << flight_pkt.gps.lat << ",";
+				stream_gps << flight_pkt.gps.lon << ",";
+				stream_gps << flight_pkt.gps.alt << ",";
+				stream_gps << flight_pkt.gps.alt_ellipsoid << ",";
+				stream_gps << flight_pkt.gps.s_variance_m_s << ",";
+				stream_gps << flight_pkt.gps.c_variance_rad << ",";
+				stream_gps << flight_pkt.gps.fix_type << ",";
+				stream_gps << flight_pkt.gps.eph << ",";
+				stream_gps << flight_pkt.gps.epv << ",";
+				stream_gps << flight_pkt.gps.hdop << ",";
+				stream_gps << flight_pkt.gps.vdop << ",";
+				stream_gps << flight_pkt.gps.noise_per_ms << ",";
+				stream_gps << flight_pkt.gps.jamming_indicator << ",";
+				stream_gps << flight_pkt.gps.vel_m_s << ",";
+				stream_gps << flight_pkt.gps.vel_n_m_s << ",";
+				stream_gps << flight_pkt.gps.vel_e_m_s << ",";
+				stream_gps << flight_pkt.gps.vel_d_m_s << ",";
+				stream_gps << flight_pkt.gps.cog_rad << ","; 
+				stream_gps << flight_pkt.gps.vel_ned_valid << ",";
+				stream_gps << flight_pkt.gps.satellites_used << endl;
+
+				stream_manual << flight_pkt.manual0.timestamp << ",";
+				stream_manual << flight_pkt.manual0.x << ",";
+				stream_manual << flight_pkt.manual0.y << ",";
+				stream_manual << flight_pkt.manual0.z << ",";
+				stream_manual << flight_pkt.manual0.r << ",";
+				stream_manual << flight_pkt.manual0.scroll[0] << ",";
+				stream_manual << flight_pkt.manual0.scroll[1] << ",";
+				stream_manual << flight_pkt.manual0.offset[0] << ",";
+				stream_manual << flight_pkt.manual0.offset[1] << ",";
+				stream_manual << flight_pkt.manual0.button << ",";
+				stream_manual << flight_pkt.manual0.gear << ",";
+				stream_manual << flight_pkt.manual0.rssi << ",";
+				stream_manual << flight_pkt.manual0.regained << endl;
 
 				state = 0;
 				break;
@@ -346,7 +484,7 @@ void CPThreadFlyDebugParse::FlyDebugParse_main(void)
 
 	}
 	}
-	file.close();
+	file_baro.close();
 
 }
 

@@ -66,7 +66,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>3</number>
     </property>
     <widget class="QWidget" name="tab_setting">
      <attribute name="title">
@@ -1110,6 +1110,22 @@
       </property>
       <property name="text">
        <string>停止录像</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bt_searchid_gnd">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>190</y>
+        <width>80</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>地面端对频</string>
       </property>
      </widget>
     </widget>

@@ -4,7 +4,7 @@
 
 #include <QMetaType>
 
-//#pragma pack(4)//设定为4字节对齐
+//设定为4字节对齐
 
 
 #define MAX_USB_BULK_SIZE  4*1024     // 32Kbyte 
@@ -426,360 +426,220 @@ typedef struct
 
 //////////////////////////////////////////////////////
 
-typedef	union {
-    float data[9];
-    struct {
-        float acc_x;
-        float acc_y;
-        float acc_z;
-        float gyro_x;
-        float gyro_y;
-        float gyro_z;
-        float mag_x;
-        float mag_y;
-        float mag_z;
-    };
-} imu9_t;
-
-typedef	union {
-    float att[3];
-    struct {
-        float yaw;
-        float pitch;
-        float roll;
-    };
-} attitude3_t;
-
-
-typedef	union {
-    int16_t ch[5];
-    struct {
-        int16_t roll;
-        int16_t pitch;
-        int16_t throttle;
-        int16_t yaw;
-        int16_t mode;
-    };
-} rc_ch_t;
-
-
-typedef	union {
-    int16_t data[4];
-    struct {
-        int16_t roll;
-        int16_t pitch;
-        int16_t throttle;
-        int16_t yaw;
-    };
-} pid_out_t;
-
-
-typedef	union {
-    int16_t data[4];
-    struct {
-        int16_t motor_back_right;
-        int16_t motor_front_right;
-        int16_t motor_back_left;
-        int16_t motor_front_left;
-    };
-} motor_t;
-
+typedef struct {
+    uint64_t timestamp;             // update time in us
+    float temperature;              // temperature in degrees celsius
+    float pressure;                 // barometric pressure, already temp. comp.
+    float altitude;                 // altitude, already temp. comp.
+} baro_t;
 
 typedef struct {
-    uint8_t hw_ok;
-    uint8_t init_ok;
-    float temperature;
-    float baro_pressure;
-    float height;
-    float height_comp;  //cm
-} spl0601_s;
+    uint64_t timestamp;       // update time in ms
+
+    float x;                // pitch control    -1..1
+    float y;                // roll control     -1..1
+    float z;                // throttle control  0..1
+    float r;                // yaw control      -1..1
+    float scroll[2];        // scroll control   -1..1
+    int8_t offset[2];       // roll-pitch offset @rad
+    uint16_t button;        // button state     @bit
+    uint8_t gear;           // control gear     1..3
+    uint8_t rssi;           // signal strength  0..100
+    uint8_t regained;       // signal regained
+} manual_t;
 
 
+
+#pragma pack(4)
 typedef struct {
-    float ax;
-    float ay;
-    float az;
-    float gx;
-    float gy;
-    float gz;
-} imu6_t;
+    uint64_t timestamp;             // update time in us
+    float x;                        // pitch control    -1..1
+    float y;                        // roll control     -1..1
+    float z;                        // throttle control  0..1
+    float r;                        // yaw control      -1..1
 
-typedef union {
-    struct {
-        float x;
-        float y;
-        float z;
-    };
-    float axis[3];
-} Axis3f;
+    float offset_x;                 // pitch offset -1..1
+    float offset_y;                 // roll offset -1..1
+    float offset_r;                 // yaw offset -1..1
 
+    uint8_t cmd_arm;
+    uint8_t cmd_stop;
+    uint8_t cmd_takeoff;
+    uint8_t cmd_land;
+    uint8_t cmd_rtl;
+    uint8_t cmd_hdg;
+    uint8_t cmd_follow;
+    uint8_t cmd_mission;
+    uint8_t cmd_circle;
 
-typedef struct {
-    uint64_t timestamp; 		// required for logger
-    double time_utc_usec;		// utc_usec
-    double lat;				// gps latitude
-    double lon;				// gps longitude
-    double alt;				// gps altitude
-    double alt_ellipsoid;		//	大地水准面差距
-    double gps_yaw;
-    double lat_err;
-    double lon_err;
-    double alt_err;
-    double pdop;
-    double hdop;
-    double vdop;
-    double vel_m_s;
-    double cog_rad;
-    double gps_yaw_real;
-    double gps_yaw_mag;
-    double gnd_speed_j;
-    double g_speed_kmh;
-    int32_t timestamp_time_relative;
-    uint8_t fix_type;
-    uint8_t vel_ned_valid;
-    uint8_t satellites_used;
-} gps_pos_s;
+    uint8_t cmd_light;
+    uint8_t cmd_gimbal;
 
-typedef struct {
-    uint32_t ch[16];
-    uint64_t timestamp;
-} sky_rc_s;
+    uint8_t cali_level;
+    uint8_t cali_mag;
 
+    int32_t lat;                    // latitude in 1e-7 degrees
+    int32_t lon;                    // longitude in 1e-7 degrees
 
-typedef struct {
-    imu6_t	imu6;
-    Axis3f 	mag;
-    spl0601_s baro;
-    gps_pos_s gps_pos;
-    sky_rc_s	sky_rc;
-} sensorData_s;
-
-
-
-typedef struct {
-    float roll;
-    float pitch;
+    float circle_radius;
+    float gps_acc;
     float yaw;
-} attitude_s;
+} app_t;
 
-typedef struct {
-    float _00;
-    float _01;
-    float _02;
-    float _10;
-    float _11;
-    float _12;
-    float _20;
-    float _21;
-    float _22;
-} dcm_s;
+#pragma pack()
 
-typedef struct {
-    float setHeading;
-    float uAltitude;
-    float u_roll;
-    float u_pitch;
-    float u_yaw;
-} ctrl_pid_s;
-
-typedef struct {
-    double lat;
-    double lon;
-    double alt;
-} gps_local_s;
 
 
 typedef struct {
-    float cm_per_deg_lat;
-    float cm_per_deg_lon;
-} gps_cal_s;
-
-
-typedef  struct {
-    double x1_hat;
-    double y1_hat;
-    float z1_hat;
-    float z2_hat;
-    float z3_hat;
-    float z1_hat2;
-    float z2_hat2;
-    float z3_acc;
-    double vx1_hat;
-    double vy1_hat;
-    float vx2_hat;
-    float vx3_hat;
-    float vy2_hat;
-    float vy3_hat;
-} kalman_output_s;
+    uint64_t timestamp;             // update time in us
+    float temperature;              // temperature in degrees celsius
+    float x, y, z;                  // body frame acceleration in m/s^s
+    float x_raw, y_raw, z_raw;      // raw sensor value of acceleration
+} accel_t;
 
 typedef struct {
-    float CH_THR;
-    float CH_AIL;
-    float CH_ELE;
-    float CH_RUD;
-    float AUX_1;
-    float AUX_2;
-    float AUX_3;
-    float AUX_4;
-    uint64_t timestamp;
-} rcf_s;
+    uint64_t timestamp;             // update time in us
+    float temperature;              // temperature in degrees celsius
+    float x, y, z;                  // body frame angular rate in rad/s
+    float x_raw, y_raw, z_raw;      // raw sensor value of angular rate
+} gyro_t;
 
+typedef struct {
+    uint64_t timestamp;             // update time in us
+    float temperature;              // temperature in degrees celsius
+    float x, y, z;                  // body frame magetic field in Guass
+    float x_raw, y_raw, z_raw;      // raw sensor value of magnetic field
+} mag_t;
+
+typedef struct {
+    uint64_t timestamp;             // update time in us
+    uint64_t timestamp_time_relative;
+    uint64_t time_utc_usec;         // timestamp (ms, UTC), this is the timestamp which comes from th gps module, It might be unvailable right after cold start, indicated by a value of 0
+    int32_t lat;                    // latitude in 1e-7 degrees
+    int32_t lon;                    // longitude in 1e-7 degrees
+    int32_t alt;                    // altitude in 1e-3 meters above MSL (millimeters)
+    int32_t alt_ellipsoid;          // altitude in 1e-3 meters blove Ellipsoid (millimeters)
+    float s_variance_m_s;           // gps speed accuracy estimate (m/s)
+    float c_variance_rad;           // gps course accuracy estimate (radians)
+    uint8_t fix_type;               // 0-1: no fix   2: 2D fix   3: 3D fix   4: RTCM code diffenrential   5: RTK float   6: RTK fixed
+    float eph;                      // gps horizontal position accuracy (meters)
+    float epv;                      // gps vertical position accuracy (meters)
+    float hdop;                     // horizontal dilution of precision
+    float vdop;                     // vertical dilution of precision
+    int32_t noise_per_ms;           // gps noise per millisecond
+    int32_t jamming_indicator;      // indicates jamming is occurring
+    float vel_m_s;                  // gps ground speed (m/s)
+    float vel_n_m_s;                // gps north velocity (m/s)
+    float vel_e_m_s;                // gps east velocity (m/s)
+    float vel_d_m_s;                // gps down velocity (m/s)
+    float cog_rad;                  // course over ground (not heading, but direction of movement), -PI..PI (radians)
+    uint8_t vel_ned_valid;             // true if NED velocity is valid
+    uint8_t satellites_used;        // number of satellites used
+} gps_t;
+
+//#pragma pack(4)
 
 typedef  struct {
     uint32_t magichead;
-    uint32_t cnt;
-    attitude_s ypr;
-    dcm_s dcm;
-    float heading;
-    ctrl_pid_s pidout;
-    imu6_t e_imu;
-    gps_local_s gps_home;
-    gps_cal_s gps_cal;
-    kalman_output_s kalman;
-    rcf_s rcf;
-    rcf_s rcf_cal;
-    uint32_t flymode;
-    motor_t motor;
+    baro_t  baro;
+    accel_t accel;
+    gyro_t  gyro;
+    mag_t 	mag;
+    gps_t 	gps;
+    manual_t manual0;
     uint32_t end;
-} flight_t;
+} flight_data_t ; 
 
-typedef  struct {
-    uint32_t magichead;
-    uint32_t cnt;
-    float ax;
-    float ay;
-    float az;
-    float gx;
-    float gy;
-    float gz;
-    float mx;
-    float my;
-    float mz;
-    float yaw;
-    float pitch;
-    float roll;
-    float u_yaw;
-    float u_pitch;
-    float u_roll;
-    uint32_t end;
-} flight_data_t;
-
+//#pragma pack()
 
 
 typedef struct {
-    int8_t       ATTPicth;       /* 俯仰角度 单位: 度 */
-    int8_t       ATTRoll;        /* 横滚角度 单位: 度 */
-    uint8_t      FlySpeed;       /* 水平速度 单位: 0.1m/s */
-    uint8_t      Voltage;        /* 电压 单位: 0.1v */
-    uint8_t      InGas;          /* 无需关心的数据  */
-    int8_t       VSpeed;         /* 垂直速度 单位: 0.1m/s */
-    uint8_t      VDOP;           /* GPS的精度 范围: 0-250, 小于150为优秀,大于150为不好 */
-    union {
-        uint8_t SysState;
-        struct {
-            uint8_t rxRssi : 4;  /* 接收机信号强度 范围 : 0-10 */
-            uint8_t GpsNum : 4;  /* 飞行器的GPS卫星数量       */
-        };
-    } SysState2;
+    float picth;		/* 俯仰角度 单位: 度 */
+    float roll;     	/* 横滚角度 单位: 度 */
+    float yaw;      	/* 航向角 单位: 度	*/
+    float flyspeed; 	/* 水平速度 单位: m/s */
 
-    union {
-        uint16_t SysState;
-        struct {
-            uint8_t FlyMode : 4;  /* 0:手动,1:姿态,2:高度,3:GPS,4:巡航,5:AOC无头,6:环绕,7:RTH返航 */
-            uint8_t IsMotoUnlock : 1;  /* 马达是否启动 */
-            uint8_t IsImuCalReq : 1;  /* 陀螺仪 校准请求            */
-            uint8_t IsMagCalReq : 1;  /* 指南针校准请求        */
-            uint8_t IsLowVoltage : 1;  /* 低电压报警                      */
-            uint8_t MagCalState : 2;  /* 指南针校准方向 1:水平校准 , 2:垂直校准        */
-            uint8_t RcIsFailed : 1;  /* 遥控信号丢失          */
-            uint8_t IsAhrsRst : 1;  /* AHRS 正在初始化              */
-            uint8_t IsAltFailed : 1;  /* 飞行器高度失控                */
-            uint8_t navState : 2;  /* 导航状态 3:跟随 2:没有导航数据 1:暂停 0:航点飞行中 */
-            uint8_t IsAccCalReq : 1;  /* 水平校准请求 */
-        };
-    } SysState1;
+    //-------------
+    float vspeed; 		/* 垂直速度 单位: m/s */
+    float altitude; 	/* 高度 单位: m */
+    float battary_voltage; 	/* 电压 单位: v */
+    float in_gas;          	/* 无需关心的数据   */
 
-    int16_t      Altitude;       /* 高度 单位: 0.1m    	                */
-    int16_t      GpsHead;        /* GPS飞行方向单位 度     		          */
-    int16_t      ATTYaw;         /* 航向角 单位: 度    	                */
-    uint16_t     HomeDistance;   /* 飞行距离单位: 米                     */
-    int16_t      HomeHead;       /* 回航角度 单位:度,范围+-180           */
-    uint16_t     FlyTime_Sec;    /* 飞行时间 单位: 秒                    */
-    uint8_t      VoltageHigh;    /* 飞行器电压的高8位                    */
-    uint8_t      reserve2;       /*                                      */
-    int32_t      Lon, Lat;       /* 飞行器的经纬度 the lag\lng           */
-    //2020.06.12
-    union {
-        uint16_t SysState;
-        struct {
-            uint8_t GyroFailed : 1;   /*  陀螺仪错误     */
-            uint8_t BarometerFailed : 1;   /*  气压计错误     */
-            uint8_t MagFailed : 1;   /*  地磁错误       */
-            uint8_t OptFlowFailed : 1;   /*  光流错误       */
-            uint8_t GpsFailed : 1;   /*  GPS错误        */
-            uint8_t isLanding : 1;   /*  正在降落       */
-            uint8_t isUping : 1;   /*  正在上升       */
-            uint8_t isReturn : 1;   /*  返航中         */
-            uint8_t isCircleFly : 1;   /*  环绕中         */
-            uint8_t IsLowVtg2 : 1;   /* 二级低电压报警   */
-            //2020.08.28
-            uint8_t Tip_NOGPS : 1;   /* 提示无GPS  */
-        };
-    } SysState3;
-    uint8_t reserve3;            /*                                      */
-    uint8_t reserve4;            /*                                      */
-    /*-------------------------------------------------------------------*/
-} tFlyStateData_V2;
+    //-------------
+    float rx_rssi;        	/* 接收机信号强度 范围 : 0-10 */
+    float gps_num;        	/* 飞行器的GPS卫星数量       */
+    float hdop; 	/* GPS的精度 范围:!!! 0-250, 小于150为优秀,大于150为不好 */
+    float vdop; 	/* GPS的精度 范围:!!! 0-250, 小于150为优秀,大于150为不好 */
+
+    //-------------
+    uint32_t lon; 	/* 飞行器的经纬度 the lag\lng           */
+    uint32_t lat; 	/* 飞行器的经纬度 the lag\lng           */
+
+    uint8_t flymode;	/* 0:手动,1:姿态,2:高度,3:GPS,4:巡航,5:AOC无头,6:环绕,7:RTH返航 */
+    uint8_t is_moto_unlock;  	/* 马达是否启动 */
+    uint8_t is_acc_cali_req;  	/* 水平校准请求 */
+    uint8_t is_imu_cali_req;  	/* 陀螺仪 校准请求 */
+
+    uint8_t tip_no_gps;   		/* 提示无GPS			*/
+    uint8_t is_mag_cali_req;	/* 指南针校准请求 */
+    uint8_t is_low_voltage;  	/* 低电压报警 */
+    uint8_t mag_cali_state;  	/* 指南针校准方向 1:水平校准 , 2:垂直校准        */
+
+    //-------------
+
+    uint8_t rc_is_failed;  	/* 遥控信号丢失          */
+    uint8_t is_ahrc_rst;  	/* AHRS 正在初始化           */
+    uint8_t is_alt_failed;  /* 飞行器高度失控            */
+    uint8_t nav_state;  	/* 导航状态 3:跟随 2:没有导航数据 1:暂停 0:航点飞行中 */
+
+    float   gps_head;        /* GPS飞行方向单位 度  */
+    float   home_distance;   /* 飞行距离单位: 米    */
+    float   homd_head;       /* 回航角度 单位:度,范围+-180 */
+
+    //-------------
 
 
-typedef struct {
-    float ATTPicth;       /* 俯仰角度 单位: 度 */
-    float ATTRoll;        /* 横滚角度 单位: 度 */
-    float ATTYaw;         /* 航向角 单位: 度    	                */
-    float FlySpeed;       /* 水平速度 单位: 0.1m/s */
-    float VSpeed;         /* 垂直速度 单位: 0.1m/s */
-    float Voltage;        /* 电压 单位: 0.1v */
-    float VDOP;           /* GPS的精度 范围: 0-250, 小于150为优秀,大于150为不好 */
-    float Altitude;       /* 高度 单位: 0.1m    	                */
-    float GpsHead;        /* GPS飞行方向单位 度     		          */
-    float HomeDistance;   /* 飞行距离单位: 米                     */
-    float HomeHead;       /* 回航角度 单位:度,范围+-180           */
-    float FlyTime_Sec;    /* 飞行时间 单位: 秒                    */
-    float Lon;       	  /* 飞行器的经纬度 the lag\lng           */
-    float Lat;       	  /* 飞行器的经纬度 the lag\lng           */
-    uint32_t rxRssi;	  /* 接收机信号强度 范围 : 0-10 */
-    uint32_t GpsNum;	  /* 飞行器的GPS卫星数量       */
-    uint32_t FlyMode;     /* 0:手动,1:姿态,2:高度,3:GPS,4:巡航,5:AOC无头,6:环绕,7:RTH返航 */
-    union {
-        uint32_t SysFlag;
-        struct {
-            uint8_t IsMotoUnlock : 1;  /* 马达是否启动 */
-            uint8_t IsImuCalReq : 1;  /* 陀螺仪 校准请求            */
-            uint8_t IsMagCalReq : 1;  /* 指南针校准请求        */
-            uint8_t IsLowVoltage : 1;  /* 低电压报警                      */
-            uint8_t MagCalState : 2;  /* 指南针校准方向 1:水平校准 , 2:垂直校准        */
-            uint8_t RcIsFailed : 1;  /* 遥控信号丢失          */
-            uint8_t IsAhrsRst : 1;  /* AHRS 正在初始化              */
-            uint8_t IsAltFailed : 1;  /* 飞行器高度失控                */
-            uint8_t navState : 2;  /* 导航状态 3:跟随 2:没有导航数据 1:暂停 0:航点飞行中 */
-            uint8_t IsAccCalReq : 1;  /* 水平校准请求 */
-            uint8_t GyroFailed : 1;   /*  陀螺仪错误     */
-            uint8_t BarometerFailed : 1;   /*  气压计错误     */
-            uint8_t MagFailed : 1;   /*  地磁错误       */
-            uint8_t OptFlowFailed : 1;   /*  光流错误       */
-            uint8_t GpsFailed : 1;   /*  GPS错误        */
-            uint8_t isLanding : 1;   /*  正在降落       */
-            uint8_t isUping : 1;   /*  正在上升       */
-            uint8_t isReturn : 1;   /*  返航中         */
-            uint8_t isCircleFly : 1;   /*  环绕中         */
-            uint8_t IsLowVtg2 : 1;   /*  二级低电压报警  	*/
-            uint8_t Tip_NOGPS : 1;   /*  提示无GPS  	  	*/
-        };
-    } SysFlag_u;
+    uint32_t fly_time_sec;   /* 飞行时间 单位: 秒          */
 
-} cf_fly_state_s;
+    uint8_t gyro_failed;   	/*  陀螺仪错误 	*/
+    uint8_t baro_failed;   	/*  气压计错误  */
+    uint8_t mag_failed;   	/*  地磁错误    */
+    uint8_t optflow_failed; /*  光流错误    */
+
+    uint8_t gps_failed;   	/*  GPS错误    */
+    uint8_t is_landing;   	/*  正在降落   	*/
+    uint8_t is_uping;   	/*  正在上升   	*/
+    uint8_t is_return;   	/*  返航中      */
+
+    uint8_t is_circle_fly;  /*  环绕中      */
+    uint8_t is_low_vtg2;   	/* 二级低电压报警	*/
+    uint8_t reserve1;   	/*       	*/
+    uint8_t reserve2;   	/*       	*/
+
+    //-------------
+
+    uint8_t reserve3;   	/*       	*/
+    uint8_t reserve4;   	/*       	*/
+    uint8_t reserve5;   	/*       	*/
+    uint8_t reserve6;   	/*       	*/
+
+    uint8_t reserve7;   	/*       	*/
+    uint8_t reserve8;   	/*       	*/
+    uint8_t reserve9;   	/*       	*/
+    uint8_t reserve10;   	/*       	*/
+
+    uint8_t reserve11;   	/*       	*/
+    uint8_t reserve12;   	/*       	*/
+    uint8_t reserve13;   	/*       	*/
+    uint8_t reserve14;   	/*       	*/
+
+    uint8_t reserve15;   	/*       	*/
+    uint8_t reserve16;   	/*       	*/
+    uint8_t reserve17;   	/*       	*/
+    uint8_t reserve18;   	/*       	*/
 
 
+} fly_state_v3_t;
 
 #define  CMD_DEVICE_INFO    0x0019
 #define  CMD_CF_PROTOCOL_TX 0x0094
@@ -795,11 +655,14 @@ typedef struct {
 #define     MSGID_SET_ARMED             0x02
 #define     MSGID_SET_DISARMED          0x03
 
+
 #define CF_PRO_MSGID_CALIBRATE   0x06
 #define     MSGID_CALIBRATE_MAG     0x02
 #define     MSGID_CALIBRATE_IMU     0x03
 #define     MSGID_CALIBRATE_RC     0x04
 
+
+#define CF_PRO_MSGID_APP_CRTL   0x07
 
 #define CF_PRO_MSGID_CAMERA      0x28
 #define     MSGID_CAMERA_TAKE_PIC       0x01
@@ -807,6 +670,4 @@ typedef struct {
 #define     MSGID_CAMERA_RECORD_STOP    0x00
 
 
-#define CF_PRO_MSGID_FLYSTATEDATA   0x1D
-
-#define CF_PRO_MSGID_FLYSTATE       0x1E    // new
+#define  MSGID_SKY2GND_FLYSTATE_V3   0x82    // new

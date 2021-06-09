@@ -16,8 +16,7 @@ extern threadsafe_queue<CMDBuffPackage*> gListRXCMD;
 extern STRU_FACTORY_SETTING cf_factroy_setting;
 extern STRU_DEVICE_INFO cf_device_info;
 
-tFlyStateData_V2 g_flystatedata_rx;
-cf_fly_state_s g_fly_state;
+fly_state_v3_t g_fly_state;
 //#define RELEASE_VERISON        1
 
 QString int8_t2Str(uint8_t* data, int len, int filedwidth, int base);
@@ -123,7 +122,6 @@ QCoolDownlaod::QCoolDownlaod(QWidget* parent)
     connect(&thThreadFlyDebug, SIGNAL(signalupdateTextUi(QString)), this, SLOT(slotupdateTextUi(QString)));
     connect(&thThreadFlyDebugParse, SIGNAL(signalupdateTextUi(QString)), this, SLOT(slotupdateTextUi(QString)));
 
-    connect(&thThreadCMDParse, SIGNAL(signalupdateFlyStateData()), this, SLOT(slotupdateFlyStateData()));
     connect(&thThreadCMDParse, SIGNAL(signalupdateFlyState()), this, SLOT(slotupdateFlyState()));
 
     qRegisterMetaType<State_LED>("State_LED");
@@ -153,13 +151,14 @@ QCoolDownlaod::QCoolDownlaod(QWidget* parent)
     connect(ui.bt_take_pic, SIGNAL(clicked()), this, SLOT(slotcmd_take_pic()));
     connect(ui.bt_record_start, SIGNAL(clicked()), this, SLOT(slotcmd_video_start()));
     connect(ui.bt_record_stop, SIGNAL(clicked()), this, SLOT(slotcmd_video_stop()));
+    connect(ui.bt_searchid_gnd, SIGNAL(clicked()), this, SLOT(slotcmd_searchid_gnd()));
+
     connect(ui.bt_imu_cali, SIGNAL(clicked()), this, SLOT(slotcmd_imu_cali()));
     connect(ui.bt_mag_cali, SIGNAL(clicked()), this, SLOT(slotcmd_mag_cali()));
     connect(ui.bt_rc_cali, SIGNAL(clicked()), this, SLOT(slotcmd_rc_cali()));
     connect(ui.bt_set_home, SIGNAL(clicked()), this, SLOT(slotcmd_set_gps_home()));
     connect(ui.bt_armed, SIGNAL(clicked()), this, SLOT(slotcmd_set_armed()));
     connect(ui.bt_disarmed, SIGNAL(clicked()), this, SLOT(slotcmd_set_disarmed()));
-
 
     connect(&thThreadCMDParse, SIGNAL(signalupdateFactorySetting()), this, SLOT(slotupdate_factroy_setting()));
     connect(&thThreadCMDParse, SIGNAL(signalupdateChipID()), this, SLOT(slotupdateChipID()));
@@ -170,7 +169,9 @@ QCoolDownlaod::QCoolDownlaod(QWidget* parent)
 
     ui.textBrowser->append("VERSION: V2.4  2021-02-06");
 
-    slotupdateFlyStateData();
+    qDebug() << "state-----------------------------------------------------------------------" << endl;
+    qDebug() << "state" << sizeof(fly_state_v3_t) << endl;
+
 }
 
 
@@ -359,7 +360,7 @@ void QCoolDownlaod::slotchanged_factroy_setting(QTreeWidgetItem* item, int colum
     {
         int uart3_baudrate = item->text(1).toInt();
 
-        if ((uart3_baudrate > 4) || (uart3_baudrate<0))
+        if ((uart3_baudrate > 10) || (uart3_baudrate<0))
         {
             uart3_baudrate = 4;
             item->setText(1, int8_t2Str( (uint8_t*)&uart3_baudrate, 1, 2, 16));
@@ -529,7 +530,7 @@ void QCoolDownlaod::add_factory_setting_data(void)
     STRU_UART_BAUDR* m_BAUDR_CTRL_Node = &fcData->st_factorySetting.st_uartBaudData;
 	QTreeWidgetItem* twiBAUDR_CTRL_Node = addNodeRoot("Uart3Baudrate", 
                     int8_t2Str(&m_BAUDR_CTRL_Node->st_uartBaudr[1], 1, 2, 16),
-                    QString::fromLocal8Bit("0 :    9600 \n1 :   19200 \n2 :   38400 \n3 :   57600 \n4 :  115200"));
+                    QString::fromLocal8Bit("0 :    9600 \n1 :   19200 \n2 :   38400 \n3 :   57600 \n4 :  115200\n10 : 3125000"));
 
     STRU_RF_BAND_MCS_OPT* m_RF_BAND_MCS_OPT = &fcData->st_factorySetting.st_rfBandMcsData;
     QTreeWidgetItem* twiRF_BAND_MCS_OPT_Node = addNodeRoot("Uart3BypassMode",
@@ -885,13 +886,25 @@ void QCoolDownlaod::slotcmd_video_start(void)
     CMD_TX.msg_len = 7;
     cmd->length = 17;
 
+
+
+
     memcpy(cmd->data, &CMD_TX, sizeof(CMD_TX));
+
+        for (int j = 0; j < 17; j++)
+    {
+        qDebug(" %d = %02x", j , cmd->data[j]); 
+
+    }
 
     if (0 == gListTXCMD.push(cmd, giveup, 100))
     {
         ui.textBrowser->append("TXCMD LIST is Full,Give Up the oldest package");
         delete giveup;
     }
+
+
+
 }
 
 void QCoolDownlaod::slotcmd_video_stop(void) 
@@ -919,6 +932,36 @@ void QCoolDownlaod::slotcmd_video_stop(void)
     cmd->length = 17;
 
     memcpy(cmd->data, &CMD_TX, sizeof(CMD_TX));
+
+
+    for (int j = 0; j < 17; j++)
+    {
+        qDebug(" %d = %02x", j, cmd->data[j]);
+
+    }
+    if (0 == gListTXCMD.push(cmd, giveup, 100))
+    {
+        ui.textBrowser->append("TXCMD LIST is Full,Give Up the oldest package");
+        delete giveup;
+    }
+}
+
+
+void QCoolDownlaod::slotcmd_searchid_gnd(void)
+{
+    CMDBuffPackage* cmd = new CMDBuffPackage;
+    CMDBuffPackage* giveup = NULL;
+    STRU_WIRELESS_MSG_HEADER CMD_SEARCHID_GND;
+
+    CMD_SEARCHID_GND.magic_header = 0x5AFF;
+    CMD_SEARCHID_GND.msg_id = 0x0013;
+    CMD_SEARCHID_GND.packet_num = 1;
+    CMD_SEARCHID_GND.packet_cur = 0;
+    CMD_SEARCHID_GND.msg_len = 0;
+    CMD_SEARCHID_GND.chk_sum = 0;
+    cmd->length = 10;
+
+    memcpy(cmd->data, &CMD_SEARCHID_GND, cmd->length);
 
     if (0 == gListTXCMD.push(cmd, giveup, 100))
     {
@@ -1119,225 +1162,25 @@ void QCoolDownlaod::slotcmd_usb_remote_update(void)
     thCoolflyMonitor.update_remote_app_flag = true;
 }
 
-
-void QCoolDownlaod::slotupdateFlyStateData(void)
-{
-    QString pri;
- 
-    pri.sprintf("%d", g_flystatedata_rx.ATTPicth);
-    ui.label_ATTpitch_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.ATTRoll);
-    ui.label_ATTroll_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.ATTYaw);
-    ui.label_ATTYaw_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.VSpeed);
-    ui.label_Vspeed_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.FlySpeed);
-    ui.label_Flyspeed_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.SysState2.rxRssi);
-    ui.label_rxRssi_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.SysState2.GpsNum);
-    ui.label_Flyspeed_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.Voltage);
-    ui.label_Voltage_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.Altitude);
-    ui.label_Altitude_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.SysState1.navState);
-    ui.label_navState_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.GpsHead);
-    ui.label_GpsHead_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.HomeDistance);
-    ui.label_HomeDistance_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.HomeHead);
-    ui.label_HomeHead_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.FlyTime_Sec);
-    ui.label_FlyTime_Sec_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.Lon);
-    ui.label_Lon_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.Lat);
-    ui.label_Lat_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.VDOP);
-    ui.label_VDOP_value->setText(pri);
-
-    pri.sprintf("%d", g_flystatedata_rx.SysState2.GpsNum);
-    ui.label_GpsNum_value->setText(pri);
-
-
-    if (g_flystatedata_rx.SysState1.IsMotoUnlock){
-        ui.label_IsMotoUnlock->setStyleSheet("color:green;");
-    }
-    else{
-        ui.label_IsMotoUnlock->setStyleSheet("color:red;");
-    }
-
-    if (g_flystatedata_rx.SysState1.IsImuCalReq) {
-        ui.label_IsImuCalReq->setStyleSheet("color:green;");
-    }
-    else {
-        ui.label_IsImuCalReq->setStyleSheet("color:red;");
-    }
-   
-    if (g_flystatedata_rx.SysState1.IsMagCalReq) {
-        ui.label_IsMagCalReq->setStyleSheet("color:green;");
-    }
-    else {
-        ui.label_IsMagCalReq->setStyleSheet("color:red;");
-    }
-
-    if (g_flystatedata_rx.SysState1.MagCalState == 1) {
-        ui.label_MagCalState->setStyleSheet("color:green;");
-    }
-    else if (g_flystatedata_rx.SysState1.MagCalState == 2) {
-        ui.label_MagCalState->setStyleSheet("color:blue;");
-    }
-    else{
-        ui.label_MagCalState->setStyleSheet("color:black;");                 
-    }
-
-    if (g_flystatedata_rx.SysState1.IsLowVoltage) {
-        ui.label_IsLowVoltage->setStyleSheet("color:red;");
-    }
-    else {
-        ui.label_IsLowVoltage->setStyleSheet("color:green;");
-    }
-    
-    if (g_flystatedata_rx.SysState1.RcIsFailed) {
-        ui.label_RcIsFailed->setStyleSheet("color:red;");
-    }
-    else {
-        ui.label_RcIsFailed->setStyleSheet("color:green;");
-    }
-        
-    if (g_flystatedata_rx.SysState1.IsAhrsRst) {
-        ui.label_IsAhrsRst->setStyleSheet("color:red;");
-    }
-    else {
-        ui.label_IsAhrsRst->setStyleSheet("color:green;");
-    }
-
-    if (g_flystatedata_rx.SysState1.IsAltFailed) {
-        ui.label_IsAltFailed->setStyleSheet("color:red;");
-    }
-    else {
-        ui.label_IsAltFailed->setStyleSheet("color:green;");
-    }
-
-    if (g_flystatedata_rx.SysState1.IsAccCalReq) {
-        ui.label_IsAccCalReq->setStyleSheet("color:red;");
-    }
-    else {
-        ui.label_IsAccCalReq->setStyleSheet("color:green;");
-    }
-     
-    if (g_flystatedata_rx.SysState3.GyroFailed) {
-        ui.label_GyroFailed->setStyleSheet("color:red;");
-    }
-    else {
-        ui.label_GyroFailed->setStyleSheet("color:green;");
-    }
-
-    if (g_flystatedata_rx.SysState3.BarometerFailed) {
-        ui.label_BarometerFailed->setStyleSheet("color:red;");
-    }
-    else {
-        ui.label_BarometerFailed->setStyleSheet("color:green;");
-    }
-
-    if (g_flystatedata_rx.SysState3.MagFailed) {
-        ui.label_MagFailed->setStyleSheet("color:red;");
-    }
-    else {
-        ui.label_MagFailed->setStyleSheet("color:green;");
-    }
-
-    if (g_flystatedata_rx.SysState3.OptFlowFailed) {
-        ui.label_OptFlowFailed->setStyleSheet("color:red;");
-    }
-    else {
-        ui.label_OptFlowFailed->setStyleSheet("color:green;");
-    }
-
-    if (g_flystatedata_rx.SysState3.GpsFailed) {
-        ui.label_GpsFailed->setStyleSheet("color:red;");
-    }
-    else {
-        ui.label_GpsFailed->setStyleSheet("color:green;");
-    }
-
-    if (g_flystatedata_rx.SysState3.isLanding) {
-        ui.label_isLanding->setStyleSheet("color:red;");
-    }
-    else {
-        ui.label_isLanding->setStyleSheet("color:green;");
-    }
-
-    if (g_flystatedata_rx.SysState3.isUping) {
-        ui.label_isUping->setStyleSheet("color:red;");
-    }
-    else {
-        ui.label_isUping->setStyleSheet("color:green;");
-    }
-
-    if (g_flystatedata_rx.SysState3.isReturn) {
-        ui.label_isReturn->setStyleSheet("color:red;");
-    }
-    else {
-        ui.label_isReturn->setStyleSheet("color:green;");
-    }
-
-    if (g_flystatedata_rx.SysState3.isCircleFly) {
-        ui.label_isCircleFly->setStyleSheet("color:red;");
-    }
-    else {
-        ui.label_isCircleFly->setStyleSheet("color:green;");
-    }
-
-    if (g_flystatedata_rx.SysState3.IsLowVtg2) {
-        ui.label_IsLowVtg2->setStyleSheet("color:red;");
-    }
-    else {
-        ui.label_IsLowVtg2->setStyleSheet("color:green;");
-    }
-
-    if (g_flystatedata_rx.SysState3.Tip_NOGPS) {
-        ui.label_Tip_NOGPS->setStyleSheet("color:red;");
-    }
-    else {
-        ui.label_Tip_NOGPS->setStyleSheet("color:green;");
-    }
-
-}
-
 void QCoolDownlaod::slotupdateFlyState(void)
 {
     QString pri;
 
-    pri.sprintf("%0.2f", g_fly_state.ATTPicth);
+    qDebug() << "g_fly_state.picth" << g_fly_state.picth;
+
+    pri.sprintf("%0.2f", g_fly_state.picth);
     ui.label_ATTpitch_value->setText(pri);
 
-    pri.sprintf("%0.2f", g_fly_state.ATTRoll);
+    pri.sprintf("%0.2f", g_fly_state.roll);
     ui.label_ATTroll_value->setText(pri);
 
-    pri.sprintf("%0.2f", g_fly_state.ATTYaw);
+    pri.sprintf("%0.2f", g_fly_state.yaw);
     ui.label_ATTYaw_value->setText(pri);
 
-
+    qDebug() << "g_fly_state.rc_is_failed" << g_fly_state.rc_is_failed;
+    qDebug() << "g_fly_state.flymode" << g_fly_state.flymode;
+    pri.sprintf("%d", g_fly_state.rc_is_failed);
+    ui.label_HomeHead_value->setText(pri);
 }
 
 
@@ -1352,8 +1195,6 @@ void QCoolDownlaod::slotcmd_set_gps_home(void)
     cf_payload[0] = MSGID_SET_GPS_HOME;
 
     packToSend(CF_PRO_MSGID_CTRL, cf_payload, 1, &cmd->data[10]);
-
-
 
     CMD_TX.chk_sum = 0;
     for (int i = 0; i < 7; i++)
@@ -1422,15 +1263,26 @@ void QCoolDownlaod::slotcmd_set_disarmed(void)
     CMDBuffPackage* giveup = NULL;
     STRU_WIRELESS_MSG_HEADER CMD_TX;
 
-    uint8_t cf_payload[1];
-    cf_payload[0] = MSGID_SET_DISARMED;
+    uint8_t cf_payload[sizeof(app_t)];
+    qDebug() << "sizeof(app_t)" << sizeof(app_t) <<endl;
+    app_t test_app;
 
-    packToSend(CF_PRO_MSGID_CTRL, cf_payload, 1, &cmd->data[10]);
+    
 
+    memset(&test_app,0,sizeof(test_app));
+    test_app.lat = 100;
+    memcpy(cf_payload, &test_app, sizeof(app_t));
+
+    packToSend(CF_PRO_MSGID_APP_CRTL, cf_payload, sizeof(app_t), &cmd->data[10]);
+
+    for (int i = 0; i < sizeof(app_t)+6; i++)
+    {
+        qDebug() << cmd->data[10 + i];
+    }
 
 
     CMD_TX.chk_sum = 0;
-    for (int i = 0; i < 7; i++)
+    for (int i = 0; i < sizeof(app_t) + 6; i++)
     {
         CMD_TX.chk_sum += cmd->data[10 + i];
     }
@@ -1439,8 +1291,8 @@ void QCoolDownlaod::slotcmd_set_disarmed(void)
     CMD_TX.msg_id = CMD_CF_PROTOCOL_TX;
     CMD_TX.packet_num = 1;
     CMD_TX.packet_cur = 0;
-    CMD_TX.msg_len = 7;
-    cmd->length = 17;
+    CMD_TX.msg_len = sizeof(app_t)+ 6;
+    cmd->length = 10 + sizeof(app_t) + 6;
 
     memcpy(cmd->data, &CMD_TX, sizeof(CMD_TX));
 

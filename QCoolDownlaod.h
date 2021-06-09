@@ -38,6 +38,9 @@ public slots:
     void slotcmd_take_pic(void);
     void slotcmd_video_start(void);
     void slotcmd_video_stop(void);
+    void slotcmd_searchid_gnd(void);
+    
+
     void slotcmd_imu_cali(void);
     void slotcmd_mag_cali(void);
     void slotcmd_rc_cali(void);
@@ -53,7 +56,6 @@ public slots:
 
     void slotflydebug_start(void);
     void slotflydebug_stop(void);
-    void slotupdateFlyStateData(void);
     void slotupdateFlyState(void);
 
 
