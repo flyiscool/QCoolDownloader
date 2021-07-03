@@ -43,7 +43,7 @@ public slots:
 
     void slotcmd_imu_cali(void);
     void slotcmd_mag_cali(void);
-    void slotcmd_rc_cali(void);
+
     void slotcmd_systemstate_rboot(void);
 
     void slotcmd_reboot(void);
@@ -67,6 +67,10 @@ public slots:
     void slot_generate_chip_id(void);
     void slot_set_chip_id(void);
     void slot_clear_log(void);
+
+    void slotcmd_test_app(void);
+    void slotcmd_test_mission(void);
+
 private:
     Ui::QCoolDownlaodClass ui;
     CPThreadCoolflyMonitor	thCoolflyMonitor;

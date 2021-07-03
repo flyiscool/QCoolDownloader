@@ -11,6 +11,7 @@ extern threadsafe_queue<CMDBuffPackage*> gListRXCMD;
 STRU_VER_INFO cf_ver_info;
 STRU_FACTORY_SETTING cf_factroy_setting;
 STRU_DEVICE_INFO cf_device_info;
+STRU_RC_STATUS cf_rc_status;
 bool cf_checksum(CMDBuffPackage* cmdrx);
 
 
@@ -192,6 +193,16 @@ void CPThreadCMDParse::CMDParse_main()
 				qDebug() << cmdrx->length << endl;
 				parse_cmd((char *)&cmdrx->data[10], msg_rx_head.msg_len);
 				break;				
+
+			case 0x0082: // 
+				qDebug() << "0x82 " <<cmdrx->length << endl;
+
+				if (cmdrx->data[10] == 1)
+				{
+					memcpy(&cf_rc_status, cmdrx->data, sizeof(STRU_RC_STATUS));
+				}
+
+				break;
 }
 		delete cmdrx;
 	}

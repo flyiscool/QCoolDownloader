@@ -155,13 +155,17 @@ QCoolDownlaod::QCoolDownlaod(QWidget* parent)
 
     connect(ui.bt_imu_cali, SIGNAL(clicked()), this, SLOT(slotcmd_imu_cali()));
     connect(ui.bt_mag_cali, SIGNAL(clicked()), this, SLOT(slotcmd_mag_cali()));
-    connect(ui.bt_rc_cali, SIGNAL(clicked()), this, SLOT(slotcmd_rc_cali()));
+
     connect(ui.bt_set_home, SIGNAL(clicked()), this, SLOT(slotcmd_set_gps_home()));
     connect(ui.bt_armed, SIGNAL(clicked()), this, SLOT(slotcmd_set_armed()));
     connect(ui.bt_disarmed, SIGNAL(clicked()), this, SLOT(slotcmd_set_disarmed()));
 
     connect(&thThreadCMDParse, SIGNAL(signalupdateFactorySetting()), this, SLOT(slotupdate_factroy_setting()));
     connect(&thThreadCMDParse, SIGNAL(signalupdateChipID()), this, SLOT(slotupdateChipID()));
+
+
+    connect(ui.bt_test_app, SIGNAL(clicked()), this, SLOT(slotcmd_test_app()));
+    connect(ui.bt_test_app, SIGNAL(clicked()), this, SLOT(slotcmd_test_mission()));
 
     ui.comboBox_year->setCurrentIndex(3);
 
@@ -1036,38 +1040,6 @@ void QCoolDownlaod::slotcmd_mag_cali(void)
     }
 }
 
-void QCoolDownlaod::slotcmd_rc_cali(void)
-{
-    CMDBuffPackage* cmd = new CMDBuffPackage;
-    CMDBuffPackage* giveup = NULL;
-    STRU_WIRELESS_MSG_HEADER CMD_TX;
-
-    uint8_t cf_payload[1];
-    cf_payload[0] = MSGID_CALIBRATE_RC;
-
-    packToSend(CF_PRO_MSGID_CALIBRATE, cf_payload, 1, &cmd->data[10]);
-
-    CMD_TX.chk_sum = 0;
-    for (int i = 0; i < 7; i++)
-    {
-        CMD_TX.chk_sum += cmd->data[10 + i];
-    }
-
-    CMD_TX.magic_header = 0x5AFF;
-    CMD_TX.msg_id = CMD_CF_PROTOCOL_TX;
-    CMD_TX.packet_num = 1;
-    CMD_TX.packet_cur = 0;
-    CMD_TX.msg_len = 7;
-    cmd->length = 17;
-
-    memcpy(cmd->data, &CMD_TX, sizeof(CMD_TX));
-
-    if (0 == gListTXCMD.push(cmd, giveup, 100))
-    {
-        ui.textBrowser->append("TXCMD LIST is Full,Give Up the oldest package");
-        delete giveup;
-    }
-}
 
 void QCoolDownlaod::slotcmd_systemstate_rboot(void)
 {
@@ -1293,6 +1265,76 @@ void QCoolDownlaod::slotcmd_set_disarmed(void)
     CMD_TX.packet_cur = 0;
     CMD_TX.msg_len = sizeof(app_t)+ 6;
     cmd->length = 10 + sizeof(app_t) + 6;
+
+    memcpy(cmd->data, &CMD_TX, sizeof(CMD_TX));
+
+    if (0 == gListTXCMD.push(cmd, giveup, 100))
+    {
+        ui.textBrowser->append("TXCMD LIST is Full,Give Up the oldest package");
+        delete giveup;
+    }
+}
+
+
+void QCoolDownlaod::slotcmd_test_app(void)
+{
+    CMDBuffPackage* cmd = new CMDBuffPackage;
+    CMDBuffPackage* giveup = NULL;
+    STRU_WIRELESS_MSG_HEADER CMD_TX;
+
+    app_t i_app_t;
+
+    i_app_t.cali_level = 1;
+
+    packToSend(CF_PRO_MSGID_APP_CRTL, (uint8_t*)&i_app_t, sizeof(app_t), &cmd->data[10]);
+
+    CMD_TX.chk_sum = 0;
+    for (int i = 0; i < sizeof(app_t) + 6; i++)
+    {
+        CMD_TX.chk_sum += cmd->data[10 + i];
+    }
+
+    CMD_TX.magic_header = 0x5AFF;
+    CMD_TX.msg_id = CMD_CF_PROTOCOL_TX;
+    CMD_TX.packet_num = 1;
+    CMD_TX.packet_cur = 0;
+    CMD_TX.msg_len = sizeof(app_t) + 6;
+    cmd->length = sizeof(app_t) + 6 + 10;
+
+    memcpy(cmd->data, &CMD_TX, sizeof(CMD_TX));
+
+    if (0 == gListTXCMD.push(cmd, giveup, 100))
+    {
+        ui.textBrowser->append("TXCMD LIST is Full,Give Up the oldest package");
+        delete giveup;
+    }
+}
+
+
+void QCoolDownlaod::slotcmd_test_mission(void)
+{
+    CMDBuffPackage* cmd = new CMDBuffPackage;
+    CMDBuffPackage* giveup = NULL;
+    STRU_WIRELESS_MSG_HEADER CMD_TX;
+
+    mission_t i_mission;
+
+    i_mission.count = 1;
+
+    packToSend(CF_PRO_MSGID_APP_MISSION, (uint8_t*)&i_mission, sizeof(mission_t), &cmd->data[10]);
+
+    CMD_TX.chk_sum = 0;
+    for (int i = 0; i < sizeof(mission_t) + 6; i++)
+    {
+        CMD_TX.chk_sum += cmd->data[10 + i];
+    }
+
+    CMD_TX.magic_header = 0x5AFF;
+    CMD_TX.msg_id = CMD_CF_PROTOCOL_TX;
+    CMD_TX.packet_num = 1;
+    CMD_TX.packet_cur = 0;
+    CMD_TX.msg_len = sizeof(mission_t) + 6;
+    cmd->length = sizeof(mission_t) + 6 + 10;
 
     memcpy(cmd->data, &CMD_TX, sizeof(CMD_TX));
 

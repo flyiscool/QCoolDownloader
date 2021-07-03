@@ -450,43 +450,6 @@ typedef struct {
 
 
 
-#pragma pack(4)
-typedef struct {
-    uint64_t timestamp;             // update time in us
-    float x;                        // pitch control    -1..1
-    float y;                        // roll control     -1..1
-    float z;                        // throttle control  0..1
-    float r;                        // yaw control      -1..1
-
-    float offset_x;                 // pitch offset -1..1
-    float offset_y;                 // roll offset -1..1
-    float offset_r;                 // yaw offset -1..1
-
-    uint8_t cmd_arm;
-    uint8_t cmd_stop;
-    uint8_t cmd_takeoff;
-    uint8_t cmd_land;
-    uint8_t cmd_rtl;
-    uint8_t cmd_hdg;
-    uint8_t cmd_follow;
-    uint8_t cmd_mission;
-    uint8_t cmd_circle;
-
-    uint8_t cmd_light;
-    uint8_t cmd_gimbal;
-
-    uint8_t cali_level;
-    uint8_t cali_mag;
-
-    int32_t lat;                    // latitude in 1e-7 degrees
-    int32_t lon;                    // longitude in 1e-7 degrees
-
-    float circle_radius;
-    float gps_acc;
-    float yaw;
-} app_t;
-
-#pragma pack()
 
 
 
@@ -552,6 +515,22 @@ typedef  struct {
 
 //#pragma pack()
 
+typedef struct {
+    uint64_t timestamp;     // time since system start in us
+    double lat;             // latitude in degrees
+    double lon;             // longitude in degrees
+    float alt;              // altitude in meters (AMSL)
+
+    float x;                // x coordinate in meters
+    float y;                // y coordinate in meters
+    float z;                // z coordinate in meters
+
+    float yaw;              // yaw angle in radians
+
+    uint8_t valid_alt;      // true when the altitude has been set
+    uint8_t valid_hpos;
+    uint8_t manual_home;		// true when home position was set manually
+} home_t;
 
 typedef struct {
     float picth;		/* 俯仰角度 单位: 度 */
@@ -575,7 +554,7 @@ typedef struct {
     uint32_t lon; 	/* 飞行器的经纬度 the lag\lng           */
     uint32_t lat; 	/* 飞行器的经纬度 the lag\lng           */
 
-    uint8_t flymode;	/* 0:手动,1:姿态,2:高度,3:GPS,4:巡航,5:AOC无头,6:环绕,7:RTH返航 */
+    uint8_t flymode;	/* 0:手动,1:姿态,2:高度,3:GPS,4:巡航,5:AOC无头,6:环绕,7:RTH返航 8: 跟随 9: 任务模式 */
     uint8_t is_moto_unlock;  	/* 马达是否启动 */
     uint8_t is_acc_cali_req;  	/* 水平校准请求 */
     uint8_t is_imu_cali_req;  	/* 陀螺仪 校准请求 */
@@ -598,7 +577,7 @@ typedef struct {
 
     //-------------
 
-
+    
     uint32_t fly_time_sec;   /* 飞行时间 单位: 秒          */
 
     uint8_t gyro_failed;   	/*  陀螺仪错误 	*/
@@ -618,26 +597,7 @@ typedef struct {
 
     //-------------
 
-    uint8_t reserve3;   	/*       	*/
-    uint8_t reserve4;   	/*       	*/
-    uint8_t reserve5;   	/*       	*/
-    uint8_t reserve6;   	/*       	*/
-
-    uint8_t reserve7;   	/*       	*/
-    uint8_t reserve8;   	/*       	*/
-    uint8_t reserve9;   	/*       	*/
-    uint8_t reserve10;   	/*       	*/
-
-    uint8_t reserve11;   	/*       	*/
-    uint8_t reserve12;   	/*       	*/
-    uint8_t reserve13;   	/*       	*/
-    uint8_t reserve14;   	/*       	*/
-
-    uint8_t reserve15;   	/*       	*/
-    uint8_t reserve16;   	/*       	*/
-    uint8_t reserve17;   	/*       	*/
-    uint8_t reserve18;   	/*       	*/
-
+    home_t home;
 
 } fly_state_v3_t;
 
@@ -663,6 +623,7 @@ typedef struct {
 
 
 #define CF_PRO_MSGID_APP_CRTL   0x07
+#define CF_PRO_MSGID_APP_MISSION   0x08
 
 #define CF_PRO_MSGID_CAMERA      0x28
 #define     MSGID_CAMERA_TAKE_PIC       0x01
@@ -671,3 +632,78 @@ typedef struct {
 
 
 #define  MSGID_SKY2GND_FLYSTATE_V3   0x82    // new
+
+
+
+
+
+typedef struct {
+    uint64_t timestamp;             // update time in us
+    float x;                        // pitch control    -1..1  俯仰控制
+    float y;                        // roll control     -1..1   横滚控制
+    float z;                        // throttle control  0..1   油门控制
+    float r;                        // yaw control      -1..1   偏航控制
+
+    float offset_x;                 // pitch offset -1..1   俯仰偏移
+    float offset_y;                 // roll offset -1..1    横滚偏移
+    float offset_r;                 // yaw offset -1..1     偏航偏移
+    uint8_t app_stick_valid;        // 虚拟摇杆有效标志  1则有效，0则无效。
+
+    uint8_t cmd_arm;                // 解锁命令
+    uint8_t cmd_stop;               // 急停命令
+    uint8_t cmd_takeoff;            // 起飞命令
+    uint8_t cmd_land;               // 着陆命令
+    uint8_t cmd_rtl;                // 返航命令
+    uint8_t cmd_hdg;                // 航线模式命令
+    uint8_t cmd_follow;             // 跟随命令
+    uint8_t cmd_mission;            // 任务命令
+    uint8_t cmd_circle;             // 环绕命令
+
+    uint8_t cmd_light;              // 开关灯命令
+    uint8_t cmd_gimbal;             //  未知待研究
+
+    uint8_t cali_level;             //水平校准命令
+    uint8_t cali_mag;               // 磁力计校准命令
+  
+
+    int32_t lat;                    // latitude in 1e-7 degrees
+    int32_t lon;                    // longitude in 1e-7 degrees
+
+    float circle_radius;           // 环绕半径
+    float gps_acc;                  // gps的加速度
+    float yaw;                      // 偏航角
+} app_t;
+
+
+
+typedef struct {
+    uint64_t timestamp;         // update time (us)
+    uint16_t count;             // mission numbers
+    uint16_t index;             // current mission index
+    int32_t lat[10];            // latitude in 1e-7 degrees
+    int32_t lon[10];            // longitude in 1e-7 degrees
+
+    float distance;             // mission distance (m)
+} mission_t;
+
+
+typedef struct
+{
+    uint8_t magic_header[2]; // 固定头
+    uint16_t msg_id; // 
+    uint8_t packet_num; // 消息包总数
+    uint8_t packet_cur; // 当前消息包序号
+    uint16_t msg_len; // payload 的总长度
+    uint16_t msg_chksum; // payload 校验值
+    uint8_t valid; //
+    uint8_t link_status; // 天地链接状态指示安卓APP通信及功能整理.md 2020/11/27
+    uint8_t vedio_status; // 天地链接状态指示安卓APP通信及功能整理.md 2020/11/27
+    uint8_t gnd_sig_quality; // 图传信号质量
+    uint8_t sky_sig_quality; // 遥控信号质量
+    uint8_t gnd_rssia;
+    uint8_t gnd_rssib;
+    uint8_t sky_rssia;
+    uint8_t sky_rssib;
+    uint8_t sky_error_score; // sky error rate percent
+    uint8_t gnd_error_score; //grd error rate percent
+} STRU_RC_STATUS;
