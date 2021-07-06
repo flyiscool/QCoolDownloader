@@ -12,6 +12,8 @@ STRU_VER_INFO cf_ver_info;
 STRU_FACTORY_SETTING cf_factroy_setting;
 STRU_DEVICE_INFO cf_device_info;
 STRU_RC_STATUS cf_rc_status;
+param_t cf_params;
+
 bool cf_checksum(CMDBuffPackage* cmdrx);
 
 

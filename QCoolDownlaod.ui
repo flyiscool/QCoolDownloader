@@ -66,7 +66,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab_setting">
      <attribute name="title">
@@ -1619,6 +1619,52 @@
       </property>
       <property name="text">
        <string>0</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_params">
+     <attribute name="title">
+      <string>飞控调参</string>
+     </attribute>
+     <widget class="QTreeWidget" name="params_setting">
+      <property name="geometry">
+       <rect>
+        <x>180</x>
+        <y>0</y>
+        <width>881</width>
+        <height>331</height>
+       </rect>
+      </property>
+      <column>
+       <property name="text">
+        <string notr="true">1</string>
+       </property>
+      </column>
+     </widget>
+     <widget class="QPushButton" name="bt_send_params">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>60</y>
+        <width>91</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>send params</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bt_get_params">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>20</y>
+        <width>91</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>get params</string>
       </property>
      </widget>
     </widget>

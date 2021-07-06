@@ -622,8 +622,15 @@ typedef struct {
 #define     MSGID_CALIBRATE_RC     0x04
 
 
+
 #define CF_PRO_MSGID_APP_CRTL   0x07
-#define CF_PRO_MSGID_APP_MISSION   0x08
+
+#define CF_PRO_MSGID_APP_MISSION    0x08
+
+#define CF_MSGID_PARAMS1   0x09
+#define CF_MSGID_PARAMS2   0x0A
+
+
 
 #define CF_PRO_MSGID_CAMERA      0x28
 #define     MSGID_CAMERA_TAKE_PIC       0x01
@@ -707,3 +714,219 @@ typedef struct
     uint8_t sky_error_score; // sky error rate percent
     uint8_t gnd_error_score; //grd error rate percent
 } STRU_RC_STATUS;
+
+
+
+
+
+typedef struct {
+    uint32_t magic_head;
+    // attitude control
+
+    float att_p[3];
+
+    float rate_p[3];
+    float rate_i[3];
+    float rate_d[3];
+    float rate_ff[3];
+    float rate_int_lim[3];
+    float auto_rate_max[3];
+    float mc_rate_max[3];
+
+    // position control
+
+    float thr_hover;
+    float thr_min;
+    float thr_max;
+
+    float tilt_max_air;
+    float tilt_max_land;
+
+    float tko_speed;
+    float land_speed;
+
+    // takeoff altitude
+    float tko_alt;
+
+    // low battery throttle
+    float battery_low1;
+    float battery_low2;
+    float battery_critical;
+
+    float pos_p[3];
+
+    float vel_p[3];
+    float vel_i[3];
+    float vel_d[3];
+    float vel_ff[3];
+    float vel_i_max[3];
+
+} param1_t;
+
+typedef struct {
+    float dec_hor_max;
+    float acc_hor_max;
+    float acc_z_p;
+    float acc_z_i;
+    float acc_z_d;
+    float acc_up_max;
+    float acc_down_max;
+
+
+    float vel_hor_max;
+    float vel_up_max;
+    float vel_down_max;
+
+    float man_vel_xy_max;
+    float man_tilt_max;
+    float man_yaw_max;
+
+
+    float global_yaw_max;
+
+    // sensor calibration
+
+    float gyro_offset[3];
+    float gyro_scale[3];
+    float accel_offset[3];
+    float accel_scale[3];
+    float mag_offset[3];
+    float mag_scale[3];
+
+    float coe;
+
+    // vehicle offset
+    float roll_offset;
+    float pitch_offset;
+
+    // limits
+    float limit_altitude;
+    float limit_altitude_rtl;
+    float limit_distance;
+    int limit_newer;
+
+    // armed counter
+    int armed_counter;
+
+    // manual control scale
+    float man_tilt_max_scale[3];
+    float man_yaw_max_scale[3];
+
+    float vel_hor_max_scale[3];
+    float vel_up_max_scale[3];
+    float vel_down_max_scale[3];
+
+
+    uint32_t magic_end;
+} param2_t;
+
+
+typedef struct {
+
+    uint32_t magic_head;
+    // attitude control
+
+    float att_p[3];
+
+    float rate_p[3];
+    float rate_i[3];
+    float rate_d[3];
+    float rate_ff[3];
+    float rate_int_lim[3];
+    float auto_rate_max[3];
+    float mc_rate_max[3];
+
+    // position control
+
+    float thr_hover;
+    float thr_min;
+    float thr_max;
+
+    float tilt_max_air;
+    float tilt_max_land;
+
+    float tko_speed;
+    float land_speed;
+
+    // takeoff altitude
+    float tko_alt;
+
+    // low battery throttle
+    float battery_low1;
+    float battery_low2;
+    float battery_critical;
+
+    float pos_p[3];
+
+    float vel_p[3];
+    float vel_i[3];
+    float vel_d[3];
+    float vel_ff[3];
+    float vel_i_max[3];
+
+    float dec_hor_max;
+    float acc_hor_max;
+    float acc_z_p;
+    float acc_z_i;
+    float acc_z_d;
+    float acc_up_max;
+    float acc_down_max;
+
+
+    float vel_hor_max;
+    float vel_up_max;
+    float vel_down_max;
+
+    float man_vel_xy_max;
+    float man_tilt_max;
+    float man_yaw_max;
+
+
+    float global_yaw_max;
+
+    // sensor calibration
+
+    float gyro_offset[3];
+    float gyro_scale[3];
+    float accel_offset[3];
+    float accel_scale[3];
+    float mag_offset[3];
+    float mag_scale[3];
+
+    float coe;
+
+    // vehicle offset
+    float roll_offset;
+    float pitch_offset;
+
+    // limits
+    float limit_altitude;
+    float limit_altitude_rtl;
+    float limit_distance;
+    int limit_newer;
+
+    // armed counter
+    int armed_counter;
+
+    // manual control scale
+    float man_tilt_max_scale[3];
+    float man_yaw_max_scale[3];
+
+    float vel_hor_max_scale[3];
+    float vel_up_max_scale[3];
+    float vel_down_max_scale[3];
+
+    uint32_t magic_end;
+
+} param_t;
+
+typedef struct
+{
+    QStringList top_labelList;
+
+    //item list
+    QList<QTreeWidgetItem*> items;
+
+    // item
+    QTreeWidgetItem att_p;
+} TAB_PARAMS_SET;

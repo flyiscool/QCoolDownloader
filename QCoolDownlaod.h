@@ -61,6 +61,7 @@ public slots:
 
     void slotupdate_factroy_setting(void);
     void slotchanged_factroy_setting(QTreeWidgetItem* item, int column);
+    void slotchanged_params_setting(QTreeWidgetItem* item, int column);
     void slotupdateChipID(void);
     void slotnum_plus(void);
     void slotnum_minus(void);
@@ -71,6 +72,11 @@ public slots:
     void slotcmd_test_app(void);
     void slotcmd_test_mission(void);
 
+    void slotcmd_get_params(void);
+    void slotcmd_send_params(void);
+
+   
+
 private:
     Ui::QCoolDownlaodClass ui;
     CPThreadCoolflyMonitor	thCoolflyMonitor;
@@ -80,9 +86,17 @@ private:
 
     void set_factory_setting_treeWidget(void);
     void add_factory_setting_data(void);
+
+    void set_params_setting_treeWidget(void);
+    
     QTreeWidgetItem* addNodeRoot(QString name, QString value, QString des);
+    QTreeWidgetItem* addNodeRoot3(QString name, QString value0, QString value1, QString value2);
     void addNodeItem(QTreeWidgetItem* parent, QString name, QString value, QString des);
     void addItemValue(QTreeWidgetItem* parent, QString value, QString des);
     TAB_FACTORY_SET tab_fs;
+    TAB_PARAMS_SET tab_params;
+    
+    void init_params(void);
+
 };
 
